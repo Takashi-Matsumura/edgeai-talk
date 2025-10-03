@@ -1,6 +1,25 @@
 version: '3.8'
 
 services:
+  # Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - OPENAI_BASE_URL=http://host.docker.internal:1234/v1
+      - OPENAI_MODEL=google/gemma-3n-e4b
+      - SYSTEM_PROMPT=あなたは展示会デモ用のアシスタントです。日本語のみで簡潔に回答してください。ローマ字や英語訳は不要です。
+      - VOICEVOX_BASE_URL=http://voicevox:50021
+      - VOICEVOX_SPEAKER_ID=3
+    depends_on:
+      - voicevox
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   # VOICEVOX Engine
   voicevox:
     image: voicevox/voicevox_engine:cpu-ubuntu20.04-latest

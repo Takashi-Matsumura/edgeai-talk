@@ -19,7 +19,16 @@ export default function Home() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [actualTtsEngine, setActualTtsEngine] = useState<'browser' | 'voicevox'>('browser');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<{
+    start: () => void;
+    stop: () => void;
+    lang: string;
+    continuous: boolean;
+    interimResults: boolean;
+    onresult: ((event: unknown) => void) | null;
+    onerror: ((event: unknown) => void) | null;
+    onend: (() => void) | null;
+  } | null>(null);
   const isTtsEnabledRef = useRef(isTtsEnabled);
 
   const scrollToBottom = () => {
@@ -37,16 +46,17 @@ export default function Home() {
   useEffect(() => {
     // Check if Web Speech API is supported
     if (typeof window !== 'undefined') {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognitionAPI) {
         setIsSpeechSupported(true);
-        const recognition = new SpeechRecognition();
+        const recognition = new SpeechRecognitionAPI();
         recognition.lang = 'ja-JP';
         recognition.continuous = false;
         recognition.interimResults = false;
 
-        recognition.onresult = (event: any) => {
-          const transcript = event.results[0][0].transcript;
+        recognition.onresult = (event: unknown) => {
+          const transcript = (event as { results: { 0: { 0: { transcript: string } } } }).results[0][0].transcript;
           setInput(transcript);
           setIsRecording(false);
 
@@ -56,8 +66,8 @@ export default function Home() {
           }
         };
 
-        recognition.onerror = (event: any) => {
-          console.error('Speech recognition error:', event.error);
+        recognition.onerror = (event: unknown) => {
+          console.error('Speech recognition error:', (event as { error: string }).error);
           setIsRecording(false);
         };
 
@@ -73,6 +83,7 @@ export default function Home() {
         setIsTtsSupported(true);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const sendMessage = async (text: string) => {
@@ -215,7 +226,10 @@ export default function Home() {
     window.speechSynthesis?.cancel();
   };
 
-  const startRecording = () => {
+  const startRecording = (e?: React.MouseEvent | React.TouchEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+
     if (!isSpeechSupported || !recognitionRef.current || isRecording) return;
 
     try {
@@ -226,7 +240,10 @@ export default function Home() {
     }
   };
 
-  const stopRecording = () => {
+  const stopRecording = (e?: React.MouseEvent | React.TouchEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+
     if (!recognitionRef.current || !isRecording) return;
 
     recognitionRef.current.stop();
@@ -257,12 +274,22 @@ export default function Home() {
       {/* Zundamon - Sleeping/Listening (Left Bottom) */}
       {!isSpeaking && !isLoading && isTtsEnabled && (
         <div
-          className="fixed bottom-8 left-8 z-50 cursor-pointer select-none"
+          className="fixed bottom-8 left-8 z-50 cursor-pointer select-none touch-none"
           onMouseDown={startRecording}
           onMouseUp={stopRecording}
           onMouseLeave={stopRecording}
-          onTouchStart={startRecording}
-          onTouchEnd={stopRecording}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            startRecording(e);
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            stopRecording(e);
+          }}
+          onTouchCancel={(e) => {
+            e.preventDefault();
+            stopRecording(e);
+          }}
         >
           <div className="relative">
             {/* Speech Bubble */}

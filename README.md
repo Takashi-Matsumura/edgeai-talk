@@ -95,7 +95,9 @@ edgeai-talk/
 │   ├── page.tsx                     # メインチャット画面
 │   └── globals.css                  # グローバルスタイル
 ├── public/                          # 静的アセット
-├── docker-compose.yml               # VOICEVOXコンテナ設定
+├── Dockerfile                       # Next.jsコンテナ設定
+├── docker-compose.yml               # アプリ全体のコンテナ構成
+├── .dockerignore                    # Dockerビルド除外設定
 ├── .env.local                       # 環境変数
 ├── TTS_SETUP.md                     # TTS設定ガイド
 ├── CLAUDE.md                        # Claude Code用ガイド
@@ -104,19 +106,27 @@ edgeai-talk/
 
 ## 開発コマンド
 
-- `npm run dev` - 開発サーバー起動
+### 開発環境
+- `npm run dev` - 開発サーバー起動（ホットリロード有効）
 - `npm run build` - プロダクションビルド
 - `npm run start` - プロダクションサーバー起動
 - `npm run lint` - ESLint実行
-- `docker-compose up -d voicevox` - VOICEVOX起動
-- `docker-compose down` - VOICEVOX停止
+
+### Docker環境（展示会本番用）
+- `docker-compose up --build -d` - 全コンテナをビルド＆起動
+- `docker-compose up -d` - 全コンテナを起動（ビルド済み）
+- `docker-compose down` - 全コンテナを停止＆削除
+- `docker-compose logs -f app` - Next.jsアプリのログ表示
+- `docker-compose logs -f voicevox` - VOICEVOXのログ表示
 
 ## 主要機能の実装詳細
 
 ### 音声入力（タップ&ホールド）
 - タップ開始: `onMouseDown` / `onTouchStart` でSpeech Recognition開始
 - タップ終了: `onMouseUp` / `onTouchEnd` で録音停止＆自動送信
+- タッチキャンセル対応: `onTouchCancel` で意図しない中断を処理
 - ビジュアルフィードバック: ずんだもんが寝ている状態→聞いている状態に変化
+- iPad/モバイル対応: `preventDefault()` + `touch-none` でブラウザの干渉を防止
 
 ### TTS自動フォールバック
 1. VOICEVOX APIを試行（`/api/tts/voicevox`）
@@ -128,12 +138,33 @@ edgeai-talk/
 - 各アシスタントメッセージに🔄ボタンを表示
 - クリックで `speakText()` 関数を呼び出し、同じ自動フォールバックロジックを使用
 
+## 展示会デプロイ手順
+
+1. **LM Studioを起動** (MacStudio上で実行)
+   ```bash
+   # モデルをロードしてサーバーを起動（ポート1234）
+   ```
+
+2. **Dockerコンテナを起動**
+   ```bash
+   docker-compose up --build -d
+   ```
+
+3. **動作確認**
+   - アプリ: http://localhost:3000
+   - VOICEVOX: http://localhost:50021/version
+
+4. **iPad mini6でアクセス**
+   - MacStudioのIPアドレスを確認: `ifconfig | grep "inet "`
+   - iPadのブラウザで `http://<MacStudioのIP>:3000` にアクセス
+   - マイク許可を承認
+
 ## 今後の展開
 
-- [ ] PWA対応（オフラインキャッシュ）
 - [ ] エラーハンドリング強化
 - [ ] 会話履歴の永続化
 - [ ] 複数キャラクター対応
+- [ ] レスポンス速度の最適化
 
 ## ライセンス
 
