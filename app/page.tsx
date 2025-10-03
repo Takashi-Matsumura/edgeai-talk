@@ -16,7 +16,7 @@ export default function Home() {
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
   const [isTtsEnabled, setIsTtsEnabled] = useState(false);
   const [isTtsSupported, setIsTtsSupported] = useState(false);
-  const [ttsEngine, setTtsEngine] = useState<'browser' | 'piper' | 'voicevox'>('browser');
+  const [ttsEngine, setTtsEngine] = useState<'browser' | 'voicevox'>('browser');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
 
@@ -92,7 +92,6 @@ export default function Home() {
           const { done, value } = await reader.read();
           if (done) {
             // ストリーミング完了後にTTS読み上げ
-            console.log('Stream done, isTtsEnabled:', isTtsEnabled, 'message length:', assistantMessage.length);
             if (isTtsEnabled && assistantMessage) {
               speakText(assistantMessage);
             }
@@ -136,12 +135,7 @@ export default function Home() {
   };
 
   const speakText = async (text: string) => {
-    console.log('speakText called:', { ttsEngine, isTtsEnabled, textLength: text.length });
-
-    if (!text) {
-      console.log('No text to speak');
-      return;
-    }
+    if (!text) return;
 
     try {
       if (ttsEngine === 'browser') {
@@ -155,40 +149,9 @@ export default function Home() {
         utterance.pitch = 1.0;
         utterance.volume = 1.0;
 
-        utterance.onstart = () => console.log('Browser TTS started');
-        utterance.onend = () => console.log('Browser TTS ended');
-        utterance.onerror = (e) => console.error('Browser TTS error:', e);
-
         window.speechSynthesis.speak(utterance);
-      } else if (ttsEngine === 'piper') {
-        // Piper TTS
-        console.log('Calling Piper TTS API');
-        const response = await fetch('/api/tts/piper', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text }),
-        });
-
-        if (!response.ok) {
-          console.error('Piper TTS error:', response.statusText);
-          return;
-        }
-
-        const audioBlob = await response.blob();
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-
-        audio.onplay = () => console.log('Piper TTS started');
-        audio.onended = () => {
-          console.log('Piper TTS ended');
-          URL.revokeObjectURL(audioUrl);
-        };
-        audio.onerror = (e) => console.error('Piper TTS playback error:', e);
-
-        await audio.play();
       } else if (ttsEngine === 'voicevox') {
         // VOICEVOX
-        console.log('Calling VOICEVOX API');
         const response = await fetch('/api/tts/voicevox', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -204,13 +167,7 @@ export default function Home() {
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
 
-        audio.onplay = () => console.log('VOICEVOX started');
-        audio.onended = () => {
-          console.log('VOICEVOX ended');
-          URL.revokeObjectURL(audioUrl);
-        };
-        audio.onerror = (e) => console.error('VOICEVOX playback error:', e);
-
+        audio.onended = () => URL.revokeObjectURL(audioUrl);
         await audio.play();
       }
     } catch (error) {
@@ -258,12 +215,11 @@ export default function Home() {
             {/* TTS Engine Selector */}
             <select
               value={ttsEngine}
-              onChange={(e) => setTtsEngine(e.target.value as 'browser' | 'piper' | 'voicevox')}
+              onChange={(e) => setTtsEngine(e.target.value as 'browser' | 'voicevox')}
               className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={!isTtsEnabled}
             >
               <option value="browser">Browser</option>
-              <option value="piper">Piper</option>
               <option value="voicevox">VOICEVOX</option>
             </select>
             {/* TTS Toggle */}

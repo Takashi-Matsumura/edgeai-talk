@@ -7,11 +7,3 @@ services:
     ports:
       - "50021:50021"
     restart: unless-stopped
-
-  # Piper TTS (simple HTTP wrapper)
-  piper:
-    image: rhasspy/wyoming-piper:latest
-    ports:
-      - "10200:10200"
-    restart: unless-stopped
-    command: --voice ja_JP-mh_model-medium
