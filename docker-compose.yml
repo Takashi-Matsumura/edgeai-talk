@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  # VOICEVOX Engine
+  voicevox:
+    image: voicevox/voicevox_engine:cpu-ubuntu20.04-latest
+    ports:
+      - "50021:50021"
+    restart: unless-stopped
+
+  # Piper TTS (simple HTTP wrapper)
+  piper:
+    image: rhasspy/wyoming-piper:latest
+    ports:
+      - "10200:10200"
+    restart: unless-stopped
+    command: --voice ja_JP-mh_model-medium
