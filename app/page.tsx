@@ -18,6 +18,7 @@ export default function Home() {
   const [isTtsSupported, setIsTtsSupported] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [actualTtsEngine, setActualTtsEngine] = useState<'browser' | 'voicevox'>('browser');
+  const [pendingTtsText, setPendingTtsText] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<{
     start: () => void;
@@ -32,6 +33,8 @@ export default function Home() {
   const isTtsEnabledRef = useRef(isTtsEnabled);
   const zundamonRef = useRef<HTMLDivElement>(null);
   const micButtonRef = useRef<HTMLButtonElement>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -41,8 +44,122 @@ export default function Home() {
     scrollToBottom();
   }, [messages]);
 
+  // startRecordingとstopRecordingをuseEffectの前に定義
+  const startRecording = () => {
+    // recognitionRefが未初期化の場合、ここで初期化を試みる
+    if (!recognitionRef.current && typeof window !== 'undefined') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognitionAPI) {
+        const recognition = new SpeechRecognitionAPI();
+        recognition.lang = 'ja-JP';
+        recognition.continuous = true;
+        recognition.interimResults = true;
+
+        recognition.onresult = (event: unknown) => {
+          const results = (event as { results: { length: number; [key: number]: { isFinal: boolean; 0: { transcript: string } } } }).results;
+          let transcript = '';
+
+          // すべての結果を結合して表示
+          for (let i = 0; i < results.length; i++) {
+            transcript += results[i][0].transcript;
+          }
+
+          setInput(transcript);
+        };
+
+        recognition.onerror = (event: unknown) => {
+          const error = (event as { error: string }).error;
+          console.error('Speech recognition error:', error);
+          setIsRecording(false);
+        };
+
+        recognition.onend = () => {
+          // タップを離した時に呼ばれる
+          setIsRecording(false);
+          // 音声認識終了後、テキストがあれば自動送信
+          setTimeout(() => {
+            setInput((currentInput) => {
+              const transcript = currentInput.trim();
+              if (transcript) {
+                sendMessage(transcript);
+                return '';
+              }
+              return currentInput;
+            });
+          }, 100);
+        };
+
+        recognitionRef.current = recognition;
+        setIsSpeechSupported(true);
+      } else {
+        return;
+      }
+    }
+
+    if (!recognitionRef.current || isRecording) return;
+
+    // ユーザー操作をトリガーに音声再生を許可
+    if (typeof window !== 'undefined') {
+      // AudioContextを初期化してブラウザの自動再生ポリシーをアンロック
+      if (!audioContextRef.current) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
+          if (AudioContextClass) {
+            audioContextRef.current = new AudioContextClass();
+            // resume()を呼んでアクティブ化
+            if (audioContextRef.current) {
+              audioContextRef.current.resume();
+            }
+          }
+        } catch (error) {
+          console.error('Failed to initialize AudioContext:', error);
+        }
+      }
+
+      // Audioエレメントを事前に作成（ユーザー操作に紐づける）
+      if (!audioElementRef.current) {
+        audioElementRef.current = new Audio();
+        // 無音を再生して自動再生ポリシーをアンロック
+        audioElementRef.current.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAAABmYWN0BAAAAAAAAABkYXRhAAAAAA==';
+        audioElementRef.current.play().catch(() => {});
+      }
+
+      // SpeechSynthesisも初期化
+      if (window.speechSynthesis) {
+        const dummyUtterance = new SpeechSynthesisUtterance('');
+        window.speechSynthesis.speak(dummyUtterance);
+      }
+    }
+
+    try {
+      recognitionRef.current.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+      setIsRecording(false);
+    }
+  };
+
+  const stopRecording = () => {
+    if (!recognitionRef.current) return;
+    recognitionRef.current.stop();
+  };
+
   useEffect(() => {
     isTtsEnabledRef.current = isTtsEnabled;
+
+    // トグルをONにした時に音声テストを実行して自動再生許可を得る
+    if (isTtsEnabled && !audioElementRef.current) {
+      const testAudio = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAAABmYWN0BAAAAAAAAABkYXRhAAAAAA==');
+      testAudio.play().then(() => {
+        audioElementRef.current = testAudio;
+        console.log('Audio autoplay unlocked');
+      }).catch((error) => {
+        console.error('Failed to unlock audio autoplay:', error);
+      });
+    }
   }, [isTtsEnabled]);
 
   // ずんだもんのタッチイベントを設定
@@ -52,23 +169,19 @@ export default function Home() {
 
     const handleTouchStart = (e: TouchEvent) => {
       e.preventDefault();
-      if (!isSpeaking && !isLoading && !isRecording) {
+      if (!isSpeaking && !isLoading) {
         startRecording();
       }
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
       e.preventDefault();
-      if (isRecording) {
-        stopRecording();
-      }
+      stopRecording();
     };
 
     const handleTouchCancel = (e: TouchEvent) => {
       e.preventDefault();
-      if (isRecording) {
-        stopRecording();
-      }
+      stopRecording();
     };
 
     // イベントリスナーを追加
@@ -82,7 +195,7 @@ export default function Home() {
       element.removeEventListener('touchend', handleTouchEnd);
       element.removeEventListener('touchcancel', handleTouchCancel);
     };
-  }, [isTtsEnabled]);
+  }, [isTtsEnabled, isSpeaking, isLoading]);
 
   // 通常モードのマイクボタンのタッチイベントを設定
   useEffect(() => {
@@ -91,23 +204,17 @@ export default function Home() {
 
     const handleTouchStart = (e: TouchEvent) => {
       e.preventDefault();
-      if (!isRecording) {
-        startRecording();
-      }
+      startRecording();
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
       e.preventDefault();
-      if (isRecording) {
-        stopRecording();
-      }
+      stopRecording();
     };
 
     const handleTouchCancel = (e: TouchEvent) => {
       e.preventDefault();
-      if (isRecording) {
-        stopRecording();
-      }
+      stopRecording();
     };
 
     // イベントリスナーを追加
@@ -132,18 +239,19 @@ export default function Home() {
         setIsSpeechSupported(true);
         const recognition = new SpeechRecognitionAPI();
         recognition.lang = 'ja-JP';
-        recognition.continuous = false;
-        recognition.interimResults = false;
+        recognition.continuous = true;
+        recognition.interimResults = true;
 
         recognition.onresult = (event: unknown) => {
-          const transcript = (event as { results: { 0: { 0: { transcript: string } } } }).results[0][0].transcript;
-          setInput(transcript);
-          setIsRecording(false);
+          const results = (event as { results: { length: number; [key: number]: { isFinal: boolean; 0: { transcript: string } } } }).results;
+          let transcript = '';
 
-          // 音声入力が完了したら自動送信
-          if (transcript.trim()) {
-            sendMessage(transcript);
+          // すべての結果を結合して表示
+          for (let i = 0; i < results.length; i++) {
+            transcript += results[i][0].transcript;
           }
+
+          setInput(transcript);
         };
 
         recognition.onerror = (event: unknown) => {
@@ -152,7 +260,19 @@ export default function Home() {
         };
 
         recognition.onend = () => {
+          // タップを離した時に呼ばれる
           setIsRecording(false);
+          // 音声認識終了後、テキストがあれば自動送信
+          setTimeout(() => {
+            setInput((currentInput) => {
+              const transcript = currentInput.trim();
+              if (transcript) {
+                sendMessage(transcript);
+                return '';
+              }
+              return currentInput;
+            });
+          }, 100);
         };
 
         recognitionRef.current = recognition;
@@ -195,7 +315,11 @@ export default function Home() {
           if (done) {
             // ストリーミング完了後にTTS読み上げ
             if (isTtsEnabledRef.current && assistantMessage) {
-              speakText(assistantMessage);
+              // まず自動再生を試みる
+              speakText(assistantMessage).catch(() => {
+                // 自動再生に失敗したら、手動再生用にテキストを保存
+                setPendingTtsText(assistantMessage);
+              });
             }
             break;
           }
@@ -253,19 +377,30 @@ export default function Home() {
         if (response.ok) {
           const audioBlob = await response.blob();
           const audioUrl = URL.createObjectURL(audioBlob);
-          const audio = new Audio(audioUrl);
+
+          // 事前作成したAudioエレメントを再利用
+          const audio = audioElementRef.current || new Audio();
+          audio.src = audioUrl;
 
           audio.onended = () => {
             URL.revokeObjectURL(audioUrl);
             setIsSpeaking(false);
           };
-          audio.onerror = () => {
+          audio.onerror = (error) => {
+            console.error('Audio playback error:', error);
             URL.revokeObjectURL(audioUrl);
             setIsSpeaking(false);
           };
 
           setActualTtsEngine('voicevox');
-          await audio.play();
+          try {
+            await audio.play();
+            setPendingTtsText(''); // 再生成功時にペンディングをクリア
+          } catch (playError) {
+            console.error('Audio play() failed:', playError);
+            setIsSpeaking(false);
+            throw playError; // エラーを上位に伝播
+          }
           return;
         }
       } catch (voicevoxError) {
@@ -306,62 +441,6 @@ export default function Home() {
     window.speechSynthesis?.cancel();
   };
 
-  const startRecording = (e?: React.MouseEvent | React.TouchEvent) => {
-    // recognitionRefが未初期化の場合、ここで初期化を試みる
-    if (!recognitionRef.current && typeof window !== 'undefined') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognitionAPI) {
-        const recognition = new SpeechRecognitionAPI();
-        recognition.lang = 'ja-JP';
-        recognition.continuous = false;
-        recognition.interimResults = false;
-
-        recognition.onresult = (event: unknown) => {
-          const transcript = (event as { results: { 0: { 0: { transcript: string } } } }).results[0][0].transcript;
-          setInput(transcript);
-          setIsRecording(false);
-
-          // 音声入力が完了したら自動送信
-          if (transcript.trim()) {
-            sendMessage(transcript);
-          }
-        };
-
-        recognition.onerror = (event: unknown) => {
-          const error = (event as { error: string }).error;
-          console.error('Speech recognition error:', error);
-          setIsRecording(false);
-        };
-
-        recognition.onend = () => {
-          setIsRecording(false);
-        };
-
-        recognitionRef.current = recognition;
-        setIsSpeechSupported(true);
-      } else {
-        return;
-      }
-    }
-
-    if (!recognitionRef.current || isRecording) return;
-
-    try {
-      recognitionRef.current.start();
-      setIsRecording(true);
-    } catch (error) {
-      console.error('Failed to start recording:', error);
-      setIsRecording(false);
-    }
-  };
-
-  const stopRecording = (e?: React.MouseEvent | React.TouchEvent) => {
-    if (!recognitionRef.current || !isRecording) return;
-
-    recognitionRef.current.stop();
-    setIsRecording(false);
-  };
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 relative">
@@ -382,6 +461,22 @@ export default function Home() {
             <div className="absolute inset-0 rounded-full border-4 border-green-400 animate-ping opacity-75"></div>
           </div>
         </div>
+      )}
+
+      {/* 手動再生ボタン（自動再生失敗時） */}
+      {pendingTtsText && isTtsEnabled && !isSpeaking && (
+        <button
+          onClick={() => {
+            speakText(pendingTtsText);
+            setPendingTtsText('');
+          }}
+          className="fixed bottom-32 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-3 hover:bg-green-600 transition-all animate-bounce"
+        >
+          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+          </svg>
+          <span className="text-lg font-bold">タップして読み上げ</span>
+        </button>
       )}
 
       {/* Zundamon - Sleeping/Listening (Left Bottom) */}

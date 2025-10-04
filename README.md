@@ -184,6 +184,14 @@ edgeai-talk/
 
 **重要:** HTTPSを使用しないと、iOS/iPadOS/Android端末でWeb Speech API（音声認識）が動作しません。
 
+## 実装済み機能
+
+- ✅ タップ&ホールド音声入力（押している間だけ録音）
+- ✅ 自動TTS再生（AI回答後、自動でVOICEVOX読み上げ）
+- ✅ リアルタイム文字起こし（話している内容が即座に表示）
+- ✅ HTTPS対応（iPad/モバイル端末でWeb Speech API利用可能）
+- ✅ TTS自動フォールバック（VOICEVOX→ブラウザTTS）
+
 ## 今後の展開
 
 - [ ] エラーハンドリング強化
