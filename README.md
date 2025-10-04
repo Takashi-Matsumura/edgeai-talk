@@ -6,6 +6,7 @@
 
 - 🎤 **タップして話す**: ずんだもんをタップして音声入力、離すと自動送信
 - 🍃 **ずんだもん読み上げ**: VOICEVOX連携で自然な日本語音声（自動フォールバック機能付き）
+- 🎬 **動画アニメーション**: 状態に応じて3種類のずんだもんアニメーション表示（寝ている・聞いている・話している）
 - 💬 **リアルタイムチャット**: ストリーミング応答でスムーズな会話体験
 - 🔁 **リピート機能**: 各回答にリピートボタン表示で再読み上げ可能
 - 📱 **iPad最適化**: iPad mini6縦型レイアウトに最適化
@@ -98,22 +99,36 @@ npm run dev
 edgeai-talk/
 ├── app/
 │   ├── api/
-│   │   ├── chat/route.ts           # LM Studio APIプロキシ
-│   │   └── tts/voicevox/route.ts   # VOICEVOX APIプロキシ
-│   ├── layout.tsx                   # ルートレイアウト
-│   ├── page.tsx                     # メインチャット画面
-│   └── globals.css                  # グローバルスタイル
-├── certs/                           # SSL証明書（自己署名）
-│   ├── cert.pem                     # 公開鍵証明書
-│   └── key.pem                      # 秘密鍵
-├── public/                          # 静的アセット
-├── server.js                        # HTTPSサーバー起動スクリプト
-├── Dockerfile                       # Next.jsコンテナ設定
-├── docker-compose.yml               # アプリ全体のコンテナ構成
-├── .dockerignore                    # Dockerビルド除外設定
-├── .env.local                       # 環境変数
-├── TTS_SETUP.md                     # TTS設定ガイド
-├── CLAUDE.md                        # Claude Code用ガイド
+│   │   ├── chat/route.ts                 # LM Studio APIプロキシ
+│   │   └── tts/voicevox/route.ts         # VOICEVOX APIプロキシ
+│   ├── components/
+│   │   ├── ChatMessage.tsx               # チャットメッセージ表示コンポーネント
+│   │   ├── ControlBar.tsx                # 入力コントロールバー
+│   │   └── ZundamonCharacter.tsx         # ずんだもんキャラクター表示
+│   ├── hooks/
+│   │   ├── useAudioUnlock.ts             # ブラウザ音声再生アンロック
+│   │   ├── useSpeechRecognition.ts       # 音声認識カスタムフック
+│   │   └── useTTS.ts                     # TTS再生カスタムフック
+│   ├── types.ts                          # TypeScript型定義
+│   ├── layout.tsx                        # ルートレイアウト
+│   ├── page.tsx                          # メインチャット画面
+│   └── globals.css                       # グローバルスタイル
+├── certs/                                # SSL証明書（自己署名）
+│   ├── cert.pem                          # 公開鍵証明書
+│   └── key.pem                           # 秘密鍵
+├── public/
+│   └── movie/                            # 動画アセット（著作権保護のためGit管理外）
+│       ├── sleep_web.mp4                 # 寝ている状態
+│       ├── wakeup_web.mp4                # 聞いている状態
+│       └── zundam_web.mp4                # 話している状態
+├── server.js                             # HTTPSサーバー起動スクリプト
+├── Dockerfile                            # Next.jsコンテナ設定
+├── docker-compose.yml                    # アプリ全体のコンテナ構成
+├── .dockerignore                         # Dockerビルド除外設定
+├── .gitignore                            # Git除外設定（public/movie/含む）
+├── .env.local                            # 環境変数
+├── TTS_SETUP.md                          # TTS設定ガイド
+├── CLAUDE.md                             # Claude Code用ガイド
 └── README.md
 ```
 
@@ -137,22 +152,44 @@ edgeai-talk/
 
 ## 主要機能の実装詳細
 
+### コンポーネント構成
+プロジェクトはReactのカスタムフックとコンポーネントに分割され、保守性と再利用性を高めています：
+
+**カスタムフック:**
+- `useSpeechRecognition` - Web Speech APIを使用した音声認識
+- `useTTS` - VOICEVOX/ブラウザTTSの統合管理と自動フォールバック
+- `useAudioUnlock` - モバイルブラウザの音声再生ポリシー対応
+
+**UIコンポーネント:**
+- `ZundamonCharacter` - キャラクター表示と動画アニメーション
+- `ChatMessage` - メッセージ表示とリピート機能
+- `ControlBar` - テキストモード用の入力UI
+
 ### 音声入力（タップ&ホールド）
 - タップ開始: `onMouseDown` / `onTouchStart` でSpeech Recognition開始
 - タップ終了: `onMouseUp` / `onTouchEnd` で録音停止＆自動送信
 - タッチキャンセル対応: `onTouchCancel` で意図しない中断を処理
-- ビジュアルフィードバック: ずんだもんが寝ている状態→聞いている状態に変化
+- ビジュアルフィードバック: ずんだもんが寝ている状態→聞いている状態に変化（動画切り替え）
 - iPad/モバイル対応: `preventDefault()` + `touch-none` でブラウザの干渉を防止
 
 ### TTS自動フォールバック
 1. VOICEVOX APIを試行（`/api/tts/voicevox`）
 2. 失敗時は自動的にブラウザTTSにフォールバック
-3. `actualTtsEngine` ステートで使用中のエンジンを追跡
+3. `actualEngine` ステートで使用中のエンジンを追跡
 4. VOICEVOXが利用可能な場合のみずんだもんアニメーション表示
+5. 詳細なログ出力（`[TTS]`プレフィックス）でデバッグをサポート
+
+### ずんだもん動画アニメーション
+3種類の状態に応じた動画を自動切り替え：
+- **sleep_web.mp4**: 待機状態（音声モードON時の左下）
+- **wakeup_web.mp4**: 録音中（タップ&ホールド時）
+- **zundam_web.mp4**: 読み上げ中（VOICEVOX使用時の右下）
+
+動画フォーマット: H.264 Baseline profile（Safari/iOS互換）、ループ再生、ミュート
 
 ### リピート機能
 - 各アシスタントメッセージに🔄ボタンを表示
-- クリックで `speakText()` 関数を呼び出し、同じ自動フォールバックロジックを使用
+- クリックで `speak()` 関数を呼び出し、同じ自動フォールバックロジックを使用
 
 ## 展示会デプロイ手順
 
@@ -191,6 +228,9 @@ edgeai-talk/
 - ✅ リアルタイム文字起こし（話している内容が即座に表示）
 - ✅ HTTPS対応（iPad/モバイル端末でWeb Speech API利用可能）
 - ✅ TTS自動フォールバック（VOICEVOX→ブラウザTTS）
+- ✅ 3種類のずんだもん動画アニメーション（寝ている・聞いている・話している）
+- ✅ コンポーネントベースアーキテクチャ（カスタムフック＋UIコンポーネント）
+- ✅ 詳細なTTSデバッグログ出力
 
 ## 今後の展開
 
@@ -198,6 +238,23 @@ edgeai-talk/
 - [ ] 会話履歴の永続化
 - [ ] 複数キャラクター対応
 - [ ] レスポンス速度の最適化
+
+## 動画アセットについて
+
+`public/movie/` 配下の動画ファイルは著作権保護のため、Gitリポジトリには含まれていません。
+
+以下の3つの動画ファイルが必要です：
+- `sleep_web.mp4` - 待機状態のアニメーション
+- `wakeup_web.mp4` - 録音中のアニメーション
+- `zundam_web.mp4` - 読み上げ中のアニメーション
+
+動画仕様:
+- コーデック: H.264 Baseline profile
+- ピクセルフォーマット: yuv420p
+- 音声: なし（ミュート）
+- 最適化: faststart（ストリーミング再生対応）
+
+動画が存在しない場合、絵文字フォールバック（😴👂🍃）が自動的に表示されます。
 
 ## ライセンス
 
