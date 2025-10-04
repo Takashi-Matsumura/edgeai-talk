@@ -30,6 +30,8 @@ export default function Home() {
     onend: (() => void) | null;
   } | null>(null);
   const isTtsEnabledRef = useRef(isTtsEnabled);
+  const zundamonRef = useRef<HTMLDivElement>(null);
+  const micButtonRef = useRef<HTMLButtonElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -41,6 +43,84 @@ export default function Home() {
 
   useEffect(() => {
     isTtsEnabledRef.current = isTtsEnabled;
+  }, [isTtsEnabled]);
+
+  // ずんだもんのタッチイベントを設定
+  useEffect(() => {
+    const element = zundamonRef.current;
+    if (!element || !isTtsEnabled) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      e.preventDefault();
+      if (!isSpeaking && !isLoading && !isRecording) {
+        startRecording();
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      e.preventDefault();
+      if (isRecording) {
+        stopRecording();
+      }
+    };
+
+    const handleTouchCancel = (e: TouchEvent) => {
+      e.preventDefault();
+      if (isRecording) {
+        stopRecording();
+      }
+    };
+
+    // イベントリスナーを追加
+    element.addEventListener('touchstart', handleTouchStart, { passive: false });
+    element.addEventListener('touchend', handleTouchEnd, { passive: false });
+    element.addEventListener('touchcancel', handleTouchCancel, { passive: false });
+
+    // クリーンアップ
+    return () => {
+      element.removeEventListener('touchstart', handleTouchStart);
+      element.removeEventListener('touchend', handleTouchEnd);
+      element.removeEventListener('touchcancel', handleTouchCancel);
+    };
+  }, [isTtsEnabled]);
+
+  // 通常モードのマイクボタンのタッチイベントを設定
+  useEffect(() => {
+    const element = micButtonRef.current;
+    if (!element || isTtsEnabled) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      e.preventDefault();
+      if (!isRecording) {
+        startRecording();
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      e.preventDefault();
+      if (isRecording) {
+        stopRecording();
+      }
+    };
+
+    const handleTouchCancel = (e: TouchEvent) => {
+      e.preventDefault();
+      if (isRecording) {
+        stopRecording();
+      }
+    };
+
+    // イベントリスナーを追加
+    element.addEventListener('touchstart', handleTouchStart, { passive: false });
+    element.addEventListener('touchend', handleTouchEnd, { passive: false });
+    element.addEventListener('touchcancel', handleTouchCancel, { passive: false });
+
+    // クリーンアップ
+    return () => {
+      element.removeEventListener('touchstart', handleTouchStart);
+      element.removeEventListener('touchend', handleTouchEnd);
+      element.removeEventListener('touchcancel', handleTouchCancel);
+    };
   }, [isTtsEnabled]);
 
   useEffect(() => {
@@ -227,23 +307,56 @@ export default function Home() {
   };
 
   const startRecording = (e?: React.MouseEvent | React.TouchEvent) => {
-    e?.preventDefault();
-    e?.stopPropagation();
+    // recognitionRefが未初期化の場合、ここで初期化を試みる
+    if (!recognitionRef.current && typeof window !== 'undefined') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognitionAPI) {
+        const recognition = new SpeechRecognitionAPI();
+        recognition.lang = 'ja-JP';
+        recognition.continuous = false;
+        recognition.interimResults = false;
 
-    if (!isSpeechSupported || !recognitionRef.current || isRecording) return;
+        recognition.onresult = (event: unknown) => {
+          const transcript = (event as { results: { 0: { 0: { transcript: string } } } }).results[0][0].transcript;
+          setInput(transcript);
+          setIsRecording(false);
+
+          // 音声入力が完了したら自動送信
+          if (transcript.trim()) {
+            sendMessage(transcript);
+          }
+        };
+
+        recognition.onerror = (event: unknown) => {
+          const error = (event as { error: string }).error;
+          console.error('Speech recognition error:', error);
+          setIsRecording(false);
+        };
+
+        recognition.onend = () => {
+          setIsRecording(false);
+        };
+
+        recognitionRef.current = recognition;
+        setIsSpeechSupported(true);
+      } else {
+        return;
+      }
+    }
+
+    if (!recognitionRef.current || isRecording) return;
 
     try {
       recognitionRef.current.start();
       setIsRecording(true);
     } catch (error) {
       console.error('Failed to start recording:', error);
+      setIsRecording(false);
     }
   };
 
   const stopRecording = (e?: React.MouseEvent | React.TouchEvent) => {
-    e?.preventDefault();
-    e?.stopPropagation();
-
     if (!recognitionRef.current || !isRecording) return;
 
     recognitionRef.current.stop();
@@ -272,24 +385,16 @@ export default function Home() {
       )}
 
       {/* Zundamon - Sleeping/Listening (Left Bottom) */}
-      {!isSpeaking && !isLoading && isTtsEnabled && (
+      {isTtsEnabled && (
         <div
-          className="fixed bottom-8 left-8 z-50 cursor-pointer select-none touch-none"
+          ref={zundamonRef}
+          className={`fixed bottom-8 left-8 z-50 select-none transition-opacity ${
+            isSpeaking || isLoading ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
+          style={{ touchAction: 'none', cursor: 'pointer', WebkitUserSelect: 'none', WebkitTouchCallout: 'none' }}
           onMouseDown={startRecording}
           onMouseUp={stopRecording}
           onMouseLeave={stopRecording}
-          onTouchStart={(e) => {
-            e.preventDefault();
-            startRecording(e);
-          }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            stopRecording(e);
-          }}
-          onTouchCancel={(e) => {
-            e.preventDefault();
-            stopRecording(e);
-          }}
         >
           <div className="relative">
             {/* Speech Bubble */}
@@ -319,6 +424,7 @@ export default function Home() {
           </div>
         </div>
       )}
+
 
       {/* Header */}
       <header className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
@@ -408,10 +514,11 @@ export default function Home() {
         <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-4">
           <form onSubmit={handleSubmit} className="flex items-center gap-2">
             <button
+              ref={micButtonRef}
               type="button"
               onClick={startRecording}
               disabled={!isSpeechSupported}
-              className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+              className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all touch-none ${
                 isRecording
                   ? 'bg-red-500 text-white shadow-lg shadow-red-500/50'
                   : isSpeechSupported
@@ -419,6 +526,10 @@ export default function Home() {
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
               }`}
               aria-label="音声入力"
+              style={{
+                WebkitUserSelect: 'none',
+                WebkitTouchCallout: 'none',
+              }}
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M7 4a3 3 0 016 0v6a3 3 0 11-6 0V4z" />

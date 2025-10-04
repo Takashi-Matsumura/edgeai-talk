@@ -62,11 +62,20 @@ docker-compose up -d voicevox
 詳細は [TTS_SETUP.md](./TTS_SETUP.md) を参照してください。
 
 6. 開発サーバーを起動:
+
+**HTTPSサーバー起動（推奨 - モバイル・タブレットからアクセス時）:**
+```bash
+npm run dev:https
+```
+ブラウザで [https://localhost:3000](https://localhost:3000) または `https://<IPアドレス>:3000` を開く
+
+**通常のHTTPサーバー起動:**
 ```bash
 npm run dev
 ```
+ブラウザで [http://localhost:3000](http://localhost:3000) を開く
 
-7. ブラウザで [http://localhost:3000](http://localhost:3000) を開く
+**重要:** iPad/iPhone/Android端末からアクセスする場合、Web Speech API（音声認識）を使用するためHTTPSが必須です。
 
 ## 使い方
 
@@ -94,7 +103,11 @@ edgeai-talk/
 │   ├── layout.tsx                   # ルートレイアウト
 │   ├── page.tsx                     # メインチャット画面
 │   └── globals.css                  # グローバルスタイル
+├── certs/                           # SSL証明書（自己署名）
+│   ├── cert.pem                     # 公開鍵証明書
+│   └── key.pem                      # 秘密鍵
 ├── public/                          # 静的アセット
+├── server.js                        # HTTPSサーバー起動スクリプト
 ├── Dockerfile                       # Next.jsコンテナ設定
 ├── docker-compose.yml               # アプリ全体のコンテナ構成
 ├── .dockerignore                    # Dockerビルド除外設定
@@ -107,17 +120,20 @@ edgeai-talk/
 ## 開発コマンド
 
 ### 開発環境
-- `npm run dev` - 開発サーバー起動（ホットリロード有効）
+- `npm run dev` - HTTP開発サーバー起動（localhost専用）
+- `npm run dev:https` - HTTPS開発サーバー起動（モバイル/タブレット対応）
 - `npm run build` - プロダクションビルド
 - `npm run start` - プロダクションサーバー起動
 - `npm run lint` - ESLint実行
 
 ### Docker環境（展示会本番用）
-- `docker-compose up --build -d` - 全コンテナをビルド＆起動
+- `docker-compose up --build -d` - 全コンテナをビルド＆起動（HTTPS対応）
 - `docker-compose up -d` - 全コンテナを起動（ビルド済み）
 - `docker-compose down` - 全コンテナを停止＆削除
 - `docker-compose logs -f app` - Next.jsアプリのログ表示
 - `docker-compose logs -f voicevox` - VOICEVOXのログ表示
+
+**注:** Dockerコンテナ環境ではHTTPS対応のため、初回アクセス時にブラウザで自己署名証明書の警告を承認する必要があります。
 
 ## 主要機能の実装詳細
 
@@ -145,19 +161,28 @@ edgeai-talk/
    # モデルをロードしてサーバーを起動（ポート1234）
    ```
 
-2. **Dockerコンテナを起動**
+2. **SSL証明書を生成**（初回のみ）
+   ```bash
+   mkdir -p certs
+   openssl req -x509 -newkey rsa:4096 -keyout certs/key.pem -out certs/cert.pem -days 365 -nodes -subj "/CN=localhost" -addext "subjectAltName=DNS:localhost,IP:<MacStudioのIP>"
+   ```
+
+3. **Dockerコンテナを起動**
    ```bash
    docker-compose up --build -d
    ```
 
-3. **動作確認**
-   - アプリ: http://localhost:3000
+4. **動作確認**
+   - アプリ: https://localhost:3000
    - VOICEVOX: http://localhost:50021/version
 
-4. **iPad mini6でアクセス**
+5. **iPad mini6/Android端末でアクセス**
    - MacStudioのIPアドレスを確認: `ifconfig | grep "inet "`
-   - iPadのブラウザで `http://<MacStudioのIP>:3000` にアクセス
+   - デバイスのブラウザで `https://<MacStudioのIP>:3000` にアクセス
+   - 初回アクセス時、証明書の警告を承認（「詳細設定」→「アクセスする」）
    - マイク許可を承認
+
+**重要:** HTTPSを使用しないと、iOS/iPadOS/Android端末でWeb Speech API（音声認識）が動作しません。
 
 ## 今後の展開
 
