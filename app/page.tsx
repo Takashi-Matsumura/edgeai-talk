@@ -171,10 +171,7 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-3">
               <div className="w-4 h-4 bg-orange-500 rounded-full animate-pulse shadow-lg shadow-orange-500/50"></div>
-              <div>
-                <h1 className="text-2xl font-black text-gray-900">EdgeAI Talk</h1>
-                <p className="text-sm font-bold text-orange-600">🔒 100% ローカル処理中</p>
-              </div>
+              <h1 className="text-2xl font-black text-gray-900">EdgeAI Talk</h1>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -231,11 +228,11 @@ export default function Home() {
 
               <h2 className="text-5xl md:text-6xl font-black text-white leading-tight px-4" style={{ textShadow: '0 4px 12px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.3)' }}>
                 インターネット不要！<br />
-                <span className="text-yellow-200">この端末だけ</span>でAIと会話
+                <span className="text-yellow-300" style={{ textShadow: '0 4px 12px rgba(202,138,4,0.9), 0 2px 4px rgba(202,138,4,0.7)' }}>この端末だけ</span>でAIと会話
               </h2>
 
               <p className="text-2xl md:text-3xl font-bold text-white leading-relaxed max-w-2xl mx-auto px-4" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
-                エッジAI搭載 - クラウド接続なしで高速レスポンス
+                エッジAI - クラウド接続なしで高速レスポンス
               </p>
             </div>
 
@@ -267,11 +264,11 @@ export default function Home() {
             {/* Call to Action */}
             <div className="flex items-center gap-4 text-white animate-bounce">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
               </svg>
               <span className="text-2xl font-bold" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>タップして試してみよう</span>
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
               </svg>
             </div>
           </div>
