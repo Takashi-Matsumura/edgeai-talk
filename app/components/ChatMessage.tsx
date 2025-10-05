@@ -9,18 +9,18 @@ interface ChatMessageProps {
 
 export function ChatMessage({ message, onRepeat, showRepeat }: ChatMessageProps) {
   return (
-    <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} gap-2`}>
+    <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} gap-3 animate-fade-in`}>
       <div
-        className={`max-w-[80%] px-4 py-3 rounded-2xl ${
+        className={`max-w-[85%] px-6 py-4 rounded-2xl shadow-2xl transition-all duration-300 hover:shadow-3xl ${
           message.role === 'user'
-            ? 'bg-blue-500 text-white'
-            : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700'
+            ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white border-2 border-orange-400'
+            : 'bg-white/95 backdrop-blur-sm text-gray-900 border-2 border-white/50'
         }`}
       >
         {message.role === 'user' ? (
-          <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+          <p className="text-xl whitespace-pre-wrap break-words font-bold leading-relaxed">{message.content}</p>
         ) : (
-          <div className="text-sm prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-ul:my-2 prose-li:my-0.5 prose-strong:font-semibold prose-strong:text-gray-900 dark:prose-strong:text-gray-100">
+          <div className="text-lg prose prose-lg max-w-none prose-p:my-3 prose-ul:my-3 prose-li:my-1 prose-strong:font-bold prose-strong:text-gray-900 prose-headings:text-gray-900 prose-headings:font-bold leading-relaxed">
             <ReactMarkdown>{message.content}</ReactMarkdown>
           </div>
         )}
@@ -29,12 +29,12 @@ export function ChatMessage({ message, onRepeat, showRepeat }: ChatMessageProps)
       {showRepeat && message.role === 'assistant' && message.content && (
         <button
           onClick={onRepeat}
-          className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800 transition-all flex items-center justify-center self-end"
+          className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 text-white hover:from-orange-500 hover:to-orange-600 hover:scale-110 transition-all duration-300 flex items-center justify-center self-end shadow-2xl border-2 border-white/50"
           aria-label="リピート"
           title="リピート"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
         </button>
       )}
@@ -44,12 +44,12 @@ export function ChatMessage({ message, onRepeat, showRepeat }: ChatMessageProps)
 
 export function LoadingIndicator() {
   return (
-    <div className="flex justify-start">
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-3 rounded-2xl">
-        <div className="flex space-x-1">
-          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+    <div className="flex justify-start animate-fade-in">
+      <div className="bg-white/95 backdrop-blur-sm px-7 py-5 rounded-2xl shadow-2xl border-2 border-white/50">
+        <div className="flex space-x-3">
+          <div className="w-4 h-4 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full animate-bounce shadow-lg" style={{ animationDelay: '0ms' }}></div>
+          <div className="w-4 h-4 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full animate-bounce shadow-lg" style={{ animationDelay: '150ms' }}></div>
+          <div className="w-4 h-4 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full animate-bounce shadow-lg" style={{ animationDelay: '300ms' }}></div>
         </div>
       </div>
     </div>
