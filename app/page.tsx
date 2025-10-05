@@ -228,7 +228,7 @@ export default function Home() {
 
               <h2 className="text-5xl md:text-6xl font-black text-white leading-tight px-4" style={{ textShadow: '0 4px 12px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.3)' }}>
                 インターネット不要！<br />
-                <span className="text-yellow-300" style={{ textShadow: '0 4px 12px rgba(202,138,4,0.9), 0 2px 4px rgba(202,138,4,0.7)' }}>この端末だけ</span>でAIと会話
+                <span className="text-orange-500" style={{ textShadow: '0 4px 12px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.3)' }}>この端末だけ</span>でAIと会話
               </h2>
 
               <p className="text-2xl md:text-3xl font-bold text-white leading-relaxed max-w-2xl mx-auto px-4" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
