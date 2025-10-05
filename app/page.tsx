@@ -181,18 +181,21 @@ export default function Home() {
               </button>
             )}
             {isTtsSupported && (
-              <button
-                onClick={() => setIsTtsEnabled(!isTtsEnabled)}
-                className="relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                style={{ backgroundColor: isTtsEnabled ? '#10b981' : '#d1d5db' }}
-                aria-label="音声読み上げ切替"
-              >
-                <span
-                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform ${
-                    isTtsEnabled ? 'translate-x-8' : 'translate-x-1'
-                  }`}
-                />
-              </button>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">TTS</span>
+                <button
+                  onClick={() => setIsTtsEnabled(!isTtsEnabled)}
+                  className="relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                  style={{ backgroundColor: isTtsEnabled ? '#10b981' : '#d1d5db' }}
+                  aria-label="音声読み上げ切替"
+                >
+                  <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform ${
+                      isTtsEnabled ? 'translate-x-8' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
             )}
           </div>
         </div>
