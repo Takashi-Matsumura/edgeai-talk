@@ -182,7 +182,6 @@ export default function Home() {
             )}
             {isTtsSupported && (
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">TTS</span>
                 <button
                   onClick={() => setIsTtsEnabled(!isTtsEnabled)}
                   className="relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
@@ -195,6 +194,7 @@ export default function Home() {
                     }`}
                   />
                 </button>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">TTS</span>
               </div>
             )}
           </div>
