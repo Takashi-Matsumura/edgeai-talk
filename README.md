@@ -30,7 +30,7 @@
 - **LLM**: LM Studio (OpenAI互換API)
 - **RAG（オプション）**: FastAPI + ChromaDB + Sentence Transformers
   - ベクトルDB: ChromaDB（ローカル永続化）
-  - 埋め込みモデル: intfloat/multilingual-e5-base
+  - 埋め込みモデル: intfloat/multilingual-e5-large（1024次元）
   - 文書処理: PDF, Markdown, テキスト対応
 
 ## 前提条件
@@ -273,13 +273,52 @@ edgeai-talk/
 - `npm run lint` - ESLint実行
 
 ### Docker環境（展示会本番用）
-- `docker-compose up --build -d` - 全コンテナをビルド＆起動（HTTPS対応）
-- `docker-compose up -d` - 全コンテナを起動（ビルド済み）
-- `docker-compose down` - 全コンテナを停止＆削除
-- `docker-compose logs -f app` - Next.jsアプリのログ表示
-- `docker-compose logs -f voicevox` - VOICEVOXのログ表示
 
-**注:** Dockerコンテナ環境ではHTTPS対応のため、初回アクセス時にブラウザで自己署名証明書の警告を承認する必要があります。
+**全サービスの起動:**
+```bash
+# 初回または更新時: ビルドして起動
+docker-compose up --build -d
+
+# 2回目以降: 起動のみ
+docker-compose up -d
+```
+
+**コンテナの確認:**
+```bash
+# 全コンテナの状態確認
+docker-compose ps
+
+# ログ表示
+docker-compose logs -f app           # Next.jsアプリ
+docker-compose logs -f rag-backend   # RAGバックエンド
+docker-compose logs -f voicevox      # VOICEVOX
+```
+
+**コンテナの停止:**
+```bash
+docker-compose down
+```
+
+**アクセスURL（Dockerコンテナ版）:**
+- **Next.jsアプリ**: http://localhost:3500
+- **RAGバックエンド**: http://localhost:8000
+- **VOICEVOX**: http://localhost:50021
+
+**RAGデータのセットアップ（Docker環境）:**
+```bash
+# サンプルデータをRAGデータベースに登録
+curl -X POST http://localhost:8000/api/documents/upload -F "file=@backend/sample_data/company_info.md"
+curl -X POST http://localhost:8000/api/documents/upload -F "file=@backend/sample_data/product_faq.md"
+curl -X POST http://localhost:8000/api/documents/upload -F "file=@backend/sample_data/technical_specs.txt"
+
+# データ登録の確認
+curl http://localhost:8000/health
+```
+
+**重要:**
+- 開発サーバー（localhost:3000）との衝突を避けるため、Docker版アプリはポート3500を使用
+- RAGデータはDockerボリューム（`rag-data`）に永続化されます
+- 初回起動時、RAGバックエンドの埋め込みモデル（約1.2GB）のダウンロードに5-10分かかります
 
 ## 主要機能の実装詳細
 
@@ -364,13 +403,14 @@ edgeai-talk/
 - ✅ コンポーネントベースアーキテクチャ（カスタムフック＋UIコンポーネント）
 - ✅ PWA対応（ホーム画面への追加、オフラインキャッシュ）
 
-### RAG機能（2025-10-13完成、2025-10-14強化）
+### RAG機能（2025-10-13完成、2025-10-14強化 + Docker化）
 - ✅ FastAPI + ChromaDBバックエンド
-- ✅ Sentence Transformersベクトル化（multilingual-e5-base, 768次元）
+- ✅ Sentence Transformersベクトル化（multilingual-e5-large, 1024次元）
 - ✅ ドキュメント管理API（アップロード、一覧、削除）
 - ✅ RAG検索エンドポイント（類似度検索、閾値0.5）
 - ✅ LM Studio連携RAGチャットAPI（ストリーミング対応）
 - ✅ サンプルデータとテストスクリプト
+- ✅ Docker完全対応（docker-compose統合、永続化ボリューム）
 - ✅ Next.jsフロントエンド完全統合
   - ✅ RAGトグルスイッチ（ON/OFF切り替え）
   - ✅ ドキュメント管理UI（モーダルウィンドウ）
@@ -422,10 +462,13 @@ EdgeAI TalkはProgressive Web App (PWA)として動作します：
 - [ ] パフォーマンス最適化
 - [ ] エラーハンドリング強化
 
-### フェーズ6: Dockerデプロイ
-- [ ] RAGバックエンドのDocker化
-- [ ] docker-compose全体統合
-- [ ] 本番環境向け最適化
+### フェーズ6: Dockerデプロイ（完了）
+- ✅ RAGバックエンドのDocker化
+- ✅ docker-compose全体統合（app, rag-backend, voicevox）
+- ✅ ヘルスチェック実装
+- ✅ 永続化ボリューム設定
+- ✅ ネットワーク構成最適化
+- ✅ ポート衝突回避（app: 3500, rag: 8000, voicevox: 50021）
 
 ### その他の改善予定
 - [ ] エラーハンドリング強化
@@ -433,7 +476,6 @@ EdgeAI TalkはProgressive Web App (PWA)として動作します：
 - [ ] 複数キャラクター対応
 - [ ] レスポンス速度の最適化
 - [ ] PWAオフライン機能の強化
-- [ ] RAG機能のDocker化
 
 ## 動画アセットについて
 

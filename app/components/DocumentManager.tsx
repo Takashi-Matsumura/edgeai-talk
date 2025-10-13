@@ -27,6 +27,12 @@ interface Template {
   filename: string;
 }
 
+interface StatsInfo {
+  unique_documents: number;
+  total_chunks: number;
+  embedding_dimension: number;
+}
+
 interface DocumentManagerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -36,7 +42,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
   const [documents, setDocuments] = useState<DocumentInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string>('');
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<StatsInfo | null>(null);
   const [viewingDocument, setViewingDocument] = useState<string | null>(null);
   const [documentContent, setDocumentContent] = useState<DocumentContent | null>(null);
   const [isLoadingContent, setIsLoadingContent] = useState(false);

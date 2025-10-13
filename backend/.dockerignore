@@ -1,0 +1,16 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+*.egg-info
+.pytest_cache
+.coverage
+htmlcov/
+.tox/
+.env
+.venv
+chroma_data/
+*.md
+!README.md

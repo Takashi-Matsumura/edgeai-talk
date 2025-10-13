@@ -5,18 +5,55 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3500:3000"
     environment:
+      - NODE_ENV=production
       - OPENAI_BASE_URL=http://host.docker.internal:1234/v1
       - OPENAI_MODEL=google/gemma-3n-e4b
       - SYSTEM_PROMPT=あなたは展示会デモ用のアシスタントです。日本語のみで簡潔に回答してください。ローマ字や英語訳は不要です。
       - VOICEVOX_BASE_URL=http://voicevox:50021
       - VOICEVOX_SPEAKER_ID=3
     depends_on:
-      - voicevox
+      rag-backend:
+        condition: service_healthy
+      voicevox:
+        condition: service_started
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - edgeai-network
+
+  # RAG Backend
+  rag-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - BACKEND_HOST=0.0.0.0
+      - BACKEND_PORT=8000
+      - CHROMA_PERSIST_DIR=/app/chroma_data
+      - EMBEDDING_MODEL=intfloat/multilingual-e5-large
+      - LM_STUDIO_BASE_URL=http://host.docker.internal:1234/v1
+      - LM_STUDIO_MODEL=google/gemma-3n-e4b
+      - CORS_ORIGINS=http://localhost:3500,http://app:3000
+    volumes:
+      - rag-data:/app/chroma_data
+      - ./backend/sample_data:/app/sample_data:ro
+      - ./backend/templates:/app/templates:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - edgeai-network
 
   # VOICEVOX Engine
   voicevox:
@@ -24,3 +61,13 @@ services:
     ports:
       - "50021:50021"
     restart: unless-stopped
+    networks:
+      - edgeai-network
+
+volumes:
+  rag-data:
+    driver: local
+
+networks:
+  edgeai-network:
+    driver: bridge

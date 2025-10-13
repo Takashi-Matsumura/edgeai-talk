@@ -23,16 +23,22 @@ WORKDIR /app
 # Set production environment
 ENV NODE_ENV=production
 
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
 # Copy necessary files from builder
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/server.js ./server.js
-COPY --from=builder /app/certs ./certs
+COPY --from=builder /app/next.config.ts ./next.config.ts
 
 # Expose port
 EXPOSE 3000
 
-# Start the application with HTTPS
-CMD ["node", "server.js"]
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:3000/api/health || exit 1
+
+# Start the application
+CMD ["npm", "start"]
