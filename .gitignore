@@ -42,3 +42,17 @@ next-env.d.ts
 
 # movie files (copyright protected)
 public/movie/
+
+# Python / RAG Backend
+backend/__pycache__/
+backend/*.pyc
+backend/venv/
+backend/.venv/
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+backend/models/
+backend/.cache/
+
+# ChromaDB
+chroma_data/

@@ -8,12 +8,15 @@ import { useAudioUnlock } from './hooks/useAudioUnlock';
 import { ZundamonSpeaking, ZundamonListening } from './components/ZundamonCharacter';
 import { ChatMessage, LoadingIndicator } from './components/ChatMessage';
 import { ControlBar } from './components/ControlBar';
+import { DocumentManager } from './components/DocumentManager';
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isTtsEnabled, setIsTtsEnabled] = useState(false);
+  const [isRagEnabled, setIsRagEnabled] = useState(true); // RAG機能のON/OFF
+  const [isDocManagerOpen, setIsDocManagerOpen] = useState(false); // ドキュメント管理モーダル
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { unlock } = useAudioUnlock();
@@ -32,10 +35,23 @@ export default function Home() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/chat', {
+      // RAG有効時はFastAPIバックエンド、無効時は従来のエンドポイント
+      const endpoint = isRagEnabled
+        ? 'http://localhost:8000/api/chat/completions'
+        : '/api/chat';
+
+      const requestBody = isRagEnabled
+        ? {
+            messages: [...messages, userMessage],
+            use_rag: true,
+            model: 'google/gemma-3n-e4b'
+          }
+        : { messages: [...messages, userMessage] };
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [...messages, userMessage] }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) throw new Error('API request failed');
@@ -92,7 +108,7 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, messages, isTtsEnabled, speak, setPendingText]);
+  }, [isLoading, messages, isTtsEnabled, isRagEnabled, speak, setPendingText]);
 
   const handleRecognitionEnd = useCallback((finalTranscript: string) => {
     if (finalTranscript) {
@@ -175,6 +191,39 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {/* RAGトグルスイッチ */}
+            <div className="flex items-center gap-2 bg-blue-100 px-3 py-2 rounded-full border-2 border-blue-300">
+              <span className="text-base font-bold text-gray-800">RAG</span>
+              <button
+                onClick={() => setIsRagEnabled(!isRagEnabled)}
+                className="relative inline-flex h-9 w-16 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-md hover:scale-105 border-2"
+                style={{
+                  backgroundColor: isRagEnabled ? '#3b82f6' : '#d1d5db',
+                  borderColor: isRagEnabled ? '#2563eb' : '#9ca3af'
+                }}
+                aria-label="RAG機能切替"
+              >
+                <span
+                  className={`inline-block h-7 w-7 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${
+                    isRagEnabled ? 'translate-x-8' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+              <span className={`text-base font-bold ${isRagEnabled ? 'text-blue-600' : 'text-gray-500'}`}>
+                {isRagEnabled ? 'ON' : 'OFF'}
+              </span>
+              <button
+                onClick={() => setIsDocManagerOpen(true)}
+                className="ml-1 w-9 h-9 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 hover:scale-110 transition-all duration-300 shadow-lg"
+                aria-label="ドキュメント管理"
+                title="ドキュメント管理"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </button>
+            </div>
+
             {isTtsEnabled && messages.length > 0 && (
               <button
                 onClick={handleClear}
@@ -302,6 +351,12 @@ export default function Home() {
           onClear={handleClear}
         />
       )}
+
+      {/* Document Manager Modal */}
+      <DocumentManager
+        isOpen={isDocManagerOpen}
+        onClose={() => setIsDocManagerOpen(false)}
+      />
     </div>
   );
 }

@@ -16,21 +16,33 @@
 - 🌐 **エッジAI訴求**: ローカル処理・プライバシー保護を強調するメッセージ
 - 📲 **PWA対応**: ホーム画面に追加してアプリのように使用可能
 - 🗑️ **音声モードでのクリア機能**: ヘッダーにゴミ箱ボタン表示
+- 🔍 **RAG対応（NEW）**: ChromaDBとSentence Transformersによる文書ベース回答生成
 
 ## 技術スタック
 
+### フロントエンド
 - **フレームワーク**: Next.js 15.5.4 (App Router)
 - **UI**: React 19, Tailwind CSS v4, TypeScript
-- **LLM**: LM Studio (OpenAI互換API)
 - **音声入力**: Web Speech API
 - **TTS**: VOICEVOX (Dockerコンテナ) + ブラウザTTS（フォールバック）
 
+### バックエンド
+- **LLM**: LM Studio (OpenAI互換API)
+- **RAG（オプション）**: FastAPI + ChromaDB + Sentence Transformers
+  - ベクトルDB: ChromaDB（ローカル永続化）
+  - 埋め込みモデル: intfloat/multilingual-e5-base
+  - 文書処理: PDF, Markdown, テキスト対応
+
 ## 前提条件
 
+### 基本要件
 - Node.js 20以上
-- Docker（VOICEVOX使用時）
 - LM Studio がインストールされ、ローカルで起動していること
   - デフォルトポート: `http://localhost:1234`
+
+### オプション要件
+- Docker（VOICEVOX使用時）
+- Python 3.11以上（RAG機能使用時）
 
 ## セットアップ
 
@@ -82,6 +94,66 @@ npm run dev
 
 **重要:** iPad/iPhone/Android端末からアクセスする場合、Web Speech API（音声認識）を使用するためHTTPSが必須です。
 
+## RAG機能のセットアップ（オプション）
+
+RAG（Retrieval-Augmented Generation）機能を使用すると、特定のドキュメント情報を基にLLMが回答できるようになります。
+
+### クイックスタート
+
+```bash
+# 1. バックエンドディレクトリに移動
+cd backend
+
+# 2. Python仮想環境を作成
+python3 -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# 3. 依存関係をインストール
+pip install -r requirements.txt
+
+# 4. サーバー起動
+python main.py
+
+# 5. サンプルデータをアップロード（別ターミナル）
+python test_rag.py
+```
+
+### UIでのRAG機能の使い方
+
+1. **RAGトグルスイッチ**: ヘッダー右上の青いトグルでRAG機能のON/OFF切り替え
+2. **ドキュメント管理**: RAGトグルの横の📄ボタンをクリックしてモーダルを開く
+   - ファイルアップロード（.txt, .md, .pdf対応）
+   - ドキュメント一覧表示
+   - ドキュメント削除
+   - RAG統計情報の表示
+3. **チャット**: RAG ONの状態で質問すると、アップロードしたドキュメントの内容を基に回答
+
+### テストプロンプト例
+
+RAG機能をテストするには、以下のプロンプトを試してください：
+
+```
+EdgeAI株式会社の設立日を教えて
+→ 期待される回答: 2020年4月1日
+
+音声認識の精度は何パーセントですか？
+→ 期待される回答: 約95%
+
+RAGで使っているベクトルは何次元ですか？
+→ 期待される回答: 768次元
+```
+
+詳細なテストプロンプト集は `QUICK_TEST_PROMPTS.md` を参照してください。
+
+詳細なセットアップ手順は **[RAG_SETUP.md](./backend/RAG_SETUP.md)** を参照してください。
+
+### RAG機能の確認
+
+- **フロントエンド**: http://localhost:3000（RAGトグルと📄ボタンで操作）
+- **APIドキュメント**: http://localhost:8000/docs
+- **ヘルスチェック**: http://localhost:8000/health
+- **RAG統計**: http://localhost:8000/api/rag/stats
+
 ## 使い方
 
 ### 初期画面（サジェスチョン機能）
@@ -112,13 +184,14 @@ npm run dev
 
 ```
 edgeai-talk/
-├── app/
+├── app/                                  # Next.jsフロントエンド
 │   ├── api/
 │   │   ├── chat/route.ts                 # LM Studio APIプロキシ
 │   │   └── tts/voicevox/route.ts         # VOICEVOX APIプロキシ
 │   ├── components/
 │   │   ├── ChatMessage.tsx               # チャットメッセージ表示コンポーネント
 │   │   ├── ControlBar.tsx                # 入力コントロールバー
+│   │   ├── DocumentManager.tsx           # ドキュメント管理UIモーダル（NEW）
 │   │   └── ZundamonCharacter.tsx         # ずんだもんキャラクター表示
 │   ├── hooks/
 │   │   ├── useAudioUnlock.ts             # ブラウザ音声再生アンロック
@@ -128,6 +201,26 @@ edgeai-talk/
 │   ├── layout.tsx                        # ルートレイアウト
 │   ├── page.tsx                          # メインチャット画面
 │   └── globals.css                       # グローバルスタイル
+├── backend/                              # RAGバックエンド（NEW）
+│   ├── main.py                           # FastAPIアプリケーション
+│   ├── config.py                         # 設定管理
+│   ├── models.py                         # Pydanticモデル
+│   ├── vectordb.py                       # ChromaDB操作
+│   ├── embeddings.py                     # ベクトル化
+│   ├── llm.py                            # LM Studio連携
+│   ├── text_processing.py                # テキスト処理
+│   ├── routes/                           # APIルート
+│   │   ├── documents.py                  # ドキュメント管理API
+│   │   ├── rag.py                        # RAG検索API
+│   │   └── chat.py                       # RAG対応チャットAPI
+│   ├── sample_data/                      # サンプルドキュメント
+│   │   ├── company_info.md
+│   │   ├── product_faq.md
+│   │   └── technical_specs.txt
+│   ├── test_rag.py                       # テストスクリプト
+│   ├── requirements.txt                  # Python依存関係
+│   └── README.md                         # バックエンドREADME
+├── chroma_data/                          # ChromaDB永続化（自動生成）
 ├── certs/                                # SSL証明書（自己署名）
 │   ├── cert.pem                          # 公開鍵証明書
 │   └── key.pem                           # 秘密鍵
@@ -141,8 +234,9 @@ edgeai-talk/
 ├── docker-compose.yml                    # アプリ全体のコンテナ構成
 ├── .dockerignore                         # Dockerビルド除外設定
 ├── .gitignore                            # Git除外設定（public/movie/含む）
-├── .env.local                            # 環境変数
+├── .env.local                            # Next.js環境変数
 ├── TTS_SETUP.md                          # TTS設定ガイド
+├── RAG_SETUP.md                          # RAG設定ガイド（NEW）
 ├── CLAUDE.md                             # Claude Code用ガイド
 └── README.md
 ```
@@ -248,6 +342,19 @@ edgeai-talk/
 - ✅ コンポーネントベースアーキテクチャ（カスタムフック＋UIコンポーネント）
 - ✅ PWA対応（ホーム画面への追加、オフラインキャッシュ）
 
+### RAG機能（NEW - 2025-10-13完成）
+- ✅ FastAPI + ChromaDBバックエンド
+- ✅ Sentence Transformersベクトル化（multilingual-e5-base, 768次元）
+- ✅ ドキュメント管理API（アップロード、一覧、削除）
+- ✅ RAG検索エンドポイント（類似度検索、閾値0.5）
+- ✅ LM Studio連携RAGチャットAPI（ストリーミング対応）
+- ✅ サンプルデータとテストスクリプト
+- ✅ Next.jsフロントエンド完全統合
+  - ✅ RAGトグルスイッチ（ON/OFF切り替え）
+  - ✅ ドキュメント管理UI（モーダルウィンドウ）
+  - ✅ RAG統計表示（ドキュメント数、チャンク数、ベクトル次元）
+  - ✅ シームレスなRAG/非RAGチャット切り替え
+
 ### 展示会向けUI/UX強化
 - ✅ オレンジ系コーポレートカラーで全体統一
 - ✅ パステル調の薄いオレンジグラデーション背景
@@ -272,11 +379,24 @@ EdgeAI TalkはProgressive Web App (PWA)として動作します：
 
 ## 今後の展開
 
+### フェーズ5: テストと最適化
+- [ ] ユニットテストの追加
+- [ ] E2Eテストの実装
+- [ ] パフォーマンス最適化
+- [ ] エラーハンドリング強化
+
+### フェーズ6: Dockerデプロイ
+- [ ] RAGバックエンドのDocker化
+- [ ] docker-compose全体統合
+- [ ] 本番環境向け最適化
+
+### その他の改善予定
 - [ ] エラーハンドリング強化
 - [ ] 会話履歴の永続化
 - [ ] 複数キャラクター対応
 - [ ] レスポンス速度の最適化
 - [ ] PWAオフライン機能の強化
+- [ ] RAG機能のDocker化
 
 ## 動画アセットについて
 
