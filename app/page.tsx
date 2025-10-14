@@ -23,11 +23,13 @@ export default function Home() {
   const { unlock } = useAudioUnlock();
   const {
     speak,
+    cancel,
     isSpeaking,
     isSupported: isTtsSupported,
     actualEngine,
     pendingText,
     setPendingText,
+    audioElementRef,
   } = useTTS();
 
   const handleTranscript = useCallback((text: string) => {
@@ -213,7 +215,13 @@ export default function Home() {
       />
 
       {/* Zundamon - Speaking */}
-      {isSpeaking && <ZundamonSpeaking actualEngine={actualEngine} />}
+      {isSpeaking && (
+        <ZundamonSpeaking
+          actualEngine={actualEngine}
+          onCancel={cancel}
+          audioElementRef={audioElementRef}
+        />
+      )}
 
       {/* Manual Play Button */}
       {pendingText && isTtsEnabled && !isSpeaking && (

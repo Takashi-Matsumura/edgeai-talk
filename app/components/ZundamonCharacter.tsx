@@ -3,28 +3,60 @@ import type { TtsEngine } from "../types";
 
 interface ZundamonSpeakingProps {
   actualEngine: TtsEngine;
+  onCancel: () => void;
+  audioElementRef: React.MutableRefObject<HTMLAudioElement | null>;
 }
 
-export function ZundamonSpeaking({ actualEngine }: ZundamonSpeakingProps) {
+export function ZundamonSpeaking({ actualEngine, onCancel, audioElementRef }: ZundamonSpeakingProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoError, setVideoError] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
 
   useEffect(() => {
-    if (actualEngine === "voicevox" && videoRef.current) {
-      videoRef.current.play().catch((error) => {
-        console.error("Video autoplay failed:", error);
-      });
+    if (actualEngine === "voicevox" && audioElementRef.current) {
+      const audio = audioElementRef.current;
+
+      const handlePlay = () => {
+        console.log("[Zundamon] Audio started playing");
+        setIsAudioPlaying(true);
+        // オーディオが再生開始されたら動画も再生
+        if (videoRef.current) {
+          videoRef.current.play().catch((error) => {
+            console.error("Video play failed:", error);
+          });
+        }
+      };
+
+      const handlePause = () => {
+        console.log("[Zundamon] Audio paused");
+        setIsAudioPlaying(false);
+      };
+
+      audio.addEventListener("play", handlePlay);
+      audio.addEventListener("pause", handlePause);
+      audio.addEventListener("ended", handlePause);
+
+      return () => {
+        audio.removeEventListener("play", handlePlay);
+        audio.removeEventListener("pause", handlePause);
+        audio.removeEventListener("ended", handlePause);
+      };
     }
-  }, [actualEngine]);
+  }, [actualEngine, audioElementRef]);
 
   if (actualEngine !== "voicevox") return null;
 
   return (
-    <div className="fixed bottom-24 right-8 z-50">
+    <div
+      className="fixed bottom-24 right-8 z-50 cursor-pointer"
+      onClick={onCancel}
+      role="button"
+      aria-label="読み上げを停止"
+    >
       <div className="relative">
-        <div className="absolute left-0 top-1/2 -translate-x-full -translate-y-1/2 -ml-4 bg-white dark:bg-gray-800 px-4 py-2 rounded-2xl shadow-lg border-2 border-green-400 whitespace-nowrap">
-          <p className="text-sm font-medium text-gray-800 dark:text-gray-100">話しているのだ!</p>
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full w-0 h-0 border-t-8 border-b-8 border-l-8 border-t-transparent border-b-transparent border-l-green-400"></div>
+        <div className="absolute top-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 px-4 py-2 rounded-2xl shadow-lg border-2 border-green-400 whitespace-nowrap hover:bg-red-50 transition-colors" style={{ right: "calc(100% + 1rem)" }}>
+          <p className="text-sm font-medium text-gray-800 dark:text-gray-100">タップで停止するのだ!</p>
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full w-0 h-0 border-t-[20px] border-b-[20px] border-l-[20px] border-t-transparent border-b-transparent border-l-green-400"></div>
         </div>
 
         <div className="w-32 h-32 rounded-full overflow-hidden shadow-2xl border-4 border-white dark:border-gray-700 bg-gradient-to-br from-green-400 to-green-600">
@@ -44,10 +76,13 @@ export function ZundamonSpeaking({ actualEngine }: ZundamonSpeakingProps) {
               onLoadedData={() => {
                 console.log("Video loaded successfully");
                 setVideoError(false);
-                videoRef.current?.play().catch((err) => {
-                  console.error("Play failed:", err);
-                  setVideoError(true);
-                });
+                // オーディオが既に再生中の場合のみ動画を再生
+                if (isAudioPlaying && videoRef.current) {
+                  videoRef.current.play().catch((err) => {
+                    console.error("Play failed:", err);
+                    setVideoError(true);
+                  });
+                }
               }}
             />
           ) : (
@@ -142,14 +177,14 @@ export function ZundamonListening({
     >
       <div className="relative">
         {isRecording ? (
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full ml-4 bg-white dark:bg-gray-800 px-4 py-2 rounded-2xl shadow-lg border-2 border-green-400 whitespace-nowrap animate-pulse">
+          <div className="absolute top-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 px-4 py-2 rounded-2xl shadow-lg border-2 border-green-400 whitespace-nowrap animate-pulse" style={{ left: "calc(100% + 1rem)" }}>
             <p className="text-sm font-medium text-gray-800 dark:text-gray-100">聞いているのだ!</p>
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full w-0 h-0 border-t-8 border-b-8 border-r-8 border-t-transparent border-b-transparent border-r-green-400"></div>
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full w-0 h-0 border-t-[20px] border-b-[20px] border-r-[20px] border-t-transparent border-b-transparent border-r-green-400"></div>
           </div>
         ) : (
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full ml-4 bg-white dark:bg-gray-800 px-4 py-2 rounded-2xl shadow-lg border-2 border-gray-300 dark:border-gray-600 whitespace-nowrap">
+          <div className="absolute top-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 px-4 py-2 rounded-2xl shadow-lg border-2 border-gray-300 dark:border-gray-600 whitespace-nowrap" style={{ left: "calc(100% + 1rem)" }}>
             <p className="text-xs text-gray-500 dark:text-gray-400">タップして話すのだ</p>
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full w-0 h-0 border-t-8 border-b-8 border-r-8 border-t-transparent border-b-transparent border-r-gray-300 dark:border-r-gray-600"></div>
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full w-0 h-0 border-t-[20px] border-b-[20px] border-r-[20px] border-t-transparent border-b-transparent border-r-gray-300 dark:border-r-gray-600"></div>
           </div>
         )}
 

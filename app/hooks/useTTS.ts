@@ -55,6 +55,12 @@ export function useTTS() {
             };
 
             setActualEngine("voicevox");
+
+            // オーディオの再生準備が完了するまで待つ
+            audio.oncanplaythrough = () => {
+              console.log("[TTS] Audio ready to play");
+            };
+
             try {
               await audio.play();
               console.log("[TTS] VOICEVOX playback started");
@@ -108,9 +114,19 @@ export function useTTS() {
   );
 
   const cancel = useCallback(() => {
+    console.log("[TTS] Cancelling speech");
+
+    // Cancel browser TTS
     if (typeof window !== "undefined") {
       window.speechSynthesis?.cancel();
     }
+
+    // Stop VOICEVOX audio
+    if (audioElementRef.current) {
+      audioElementRef.current.pause();
+      audioElementRef.current.currentTime = 0;
+    }
+
     setIsSpeaking(false);
   }, []);
 
