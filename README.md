@@ -25,6 +25,7 @@
 - **UI**: React 19, Tailwind CSS v4, TypeScript
 - **音声入力**: Web Speech API
 - **TTS**: VOICEVOX (Dockerコンテナ) + ブラウザTTS（フォールバック）
+- **Linter/Formatter**: Biome 2.2.6（高速Rust製リンター）
 
 ### バックエンド
 - **LLM**: LM Studio (OpenAI互換API)
@@ -257,6 +258,7 @@ edgeai-talk/
 ├── .dockerignore                         # Dockerビルド除外設定
 ├── .gitignore                            # Git除外設定（public/movie/含む）
 ├── .env.local                            # Next.js環境変数
+├── biome.json                            # Biomeリンター設定（NEW）
 ├── TTS_SETUP.md                          # TTS設定ガイド
 ├── RAG_SETUP.md                          # RAG設定ガイド（NEW）
 ├── CLAUDE.md                             # Claude Code用ガイド
@@ -270,7 +272,13 @@ edgeai-talk/
 - `npm run dev:https` - HTTPS開発サーバー起動（モバイル/タブレット対応）
 - `npm run build` - プロダクションビルド
 - `npm run start` - プロダクションサーバー起動
-- `npm run lint` - ESLint実行
+
+### コード品質管理
+- `npm run lint` - Biomeでlintチェック＆自動修正
+- `npm run lint:check` - lintチェックのみ（修正なし）
+- `npm run lint:ci` - CI/CD用（警告もエラー扱い）
+- `npm run format` - コードフォーマット＆自動修正
+- `npm run format:check` - フォーマットチェックのみ
 
 ### Docker環境（展示会本番用）
 

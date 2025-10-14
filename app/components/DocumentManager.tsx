@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from "react";
 
 // RAGバックエンドのベースURL
-const RAG_BACKEND_URL = process.env.NEXT_PUBLIC_RAG_BACKEND_URL || 'http://localhost:8000';
+const RAG_BACKEND_URL = process.env.NEXT_PUBLIC_RAG_BACKEND_URL || "http://localhost:8000";
 
 interface DocumentInfo {
   filename: string;
@@ -44,7 +44,7 @@ interface DocumentManagerProps {
 export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
   const [documents, setDocuments] = useState<DocumentInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<string>('');
+  const [uploadStatus, setUploadStatus] = useState<string>("");
   const [stats, setStats] = useState<StatsInfo | null>(null);
   const [viewingDocument, setViewingDocument] = useState<string | null>(null);
   const [documentContent, setDocumentContent] = useState<DocumentContent | null>(null);
@@ -52,13 +52,13 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
 
   // テキストエディタモード用の状態
   const [isTextMode, setIsTextMode] = useState(false);
-  const [editorText, setEditorText] = useState('');
-  const [editorFilename, setEditorFilename] = useState('');
+  const [editorText, setEditorText] = useState("");
+  const [editorFilename, setEditorFilename] = useState("");
   const [templates, setTemplates] = useState<Template[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
 
   // 検索機能用の状態
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // ドラッグ&ドロップとリサイズ用の状態
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -77,7 +77,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
         setDocuments(data.documents || []);
       }
     } catch (error) {
-      console.error('Failed to fetch documents:', error);
+      console.error("Failed to fetch documents:", error);
     }
   };
 
@@ -90,7 +90,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
         setStats(data);
       }
     } catch (error) {
-      console.error('Failed to fetch stats:', error);
+      console.error("Failed to fetch stats:", error);
     }
   };
 
@@ -103,7 +103,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
         setTemplates(data.templates || []);
       }
     } catch (error) {
-      console.error('Failed to fetch templates:', error);
+      console.error("Failed to fetch templates:", error);
     }
   };
 
@@ -116,14 +116,14 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
       setViewingDocument(null);
       setDocumentContent(null);
       setIsTextMode(false);
-      setEditorText('');
-      setEditorFilename('');
-      setSelectedTemplate('');
+      setEditorText("");
+      setEditorFilename("");
+      setSelectedTemplate("");
       // ポジションを中央に
       setPosition({ x: 0, y: 0 });
       setSize({ width: 900, height: 700 });
     }
-  }, [isOpen]);
+  }, [isOpen, fetchDocuments, fetchStats, fetchTemplates]);
 
   // ドラッグ開始
   const handleDragStart = (e: React.MouseEvent) => {
@@ -168,11 +168,11 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
     };
 
     if (isDragging || isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
       return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
       };
     }
   }, [isDragging, isResizing, dragStart, resizeStart]);
@@ -181,19 +181,21 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
   const fetchDocumentContent = async (filename: string) => {
     setIsLoadingContent(true);
     try {
-      const response = await fetch(`${RAG_BACKEND_URL}/api/documents/content/${encodeURIComponent(filename)}`);
+      const response = await fetch(
+        `${RAG_BACKEND_URL}/api/documents/content/${encodeURIComponent(filename)}`
+      );
       if (response.ok) {
         const data = await response.json();
         setDocumentContent(data);
         setViewingDocument(filename);
       } else {
-        setUploadStatus('❌ コンテンツの取得に失敗しました');
-        setTimeout(() => setUploadStatus(''), 3000);
+        setUploadStatus("❌ コンテンツの取得に失敗しました");
+        setTimeout(() => setUploadStatus(""), 3000);
       }
     } catch (error) {
-      console.error('Failed to fetch document content:', error);
-      setUploadStatus('❌ コンテンツの取得に失敗しました');
-      setTimeout(() => setUploadStatus(''), 3000);
+      console.error("Failed to fetch document content:", error);
+      setUploadStatus("❌ コンテンツの取得に失敗しました");
+      setTimeout(() => setUploadStatus(""), 3000);
     } finally {
       setIsLoadingContent(false);
     }
@@ -203,21 +205,21 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
   const closeDocumentView = () => {
     setViewingDocument(null);
     setDocumentContent(null);
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
   // 検索キーワードをハイライト表示する関数
   const highlightText = (text: string, query: string) => {
     if (!query.trim()) return text;
 
-    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
     const parts = text.split(regex);
 
-    return parts.map((part, index) =>
-      regex.test(part)
-        ? `<mark class="bg-yellow-300 px-1 rounded">${part}</mark>`
-        : part
-    ).join('');
+    return parts
+      .map((part, _index) =>
+        regex.test(part) ? `<mark class="bg-yellow-300 px-1 rounded">${part}</mark>` : part
+      )
+      .join("");
   };
 
   // チャンクが検索クエリにマッチするかチェック
@@ -229,8 +231,8 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
   // テンプレート選択時の処理
   const handleTemplateSelect = async (templateId: string) => {
     if (!templateId) {
-      setEditorText('');
-      setSelectedTemplate('');
+      setEditorText("");
+      setSelectedTemplate("");
       return;
     }
 
@@ -246,34 +248,34 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
         }
       }
     } catch (error) {
-      console.error('Failed to load template:', error);
-      setUploadStatus('❌ テンプレートの読み込みに失敗しました');
-      setTimeout(() => setUploadStatus(''), 3000);
+      console.error("Failed to load template:", error);
+      setUploadStatus("❌ テンプレートの読み込みに失敗しました");
+      setTimeout(() => setUploadStatus(""), 3000);
     }
   };
 
   // テキストをRAGに追加
   const handleTextUpload = async () => {
     if (!editorText.trim()) {
-      setUploadStatus('❌ テキストを入力してください');
-      setTimeout(() => setUploadStatus(''), 3000);
+      setUploadStatus("❌ テキストを入力してください");
+      setTimeout(() => setUploadStatus(""), 3000);
       return;
     }
 
     if (!editorFilename.trim()) {
-      setUploadStatus('❌ ファイル名を入力してください');
-      setTimeout(() => setUploadStatus(''), 3000);
+      setUploadStatus("❌ ファイル名を入力してください");
+      setTimeout(() => setUploadStatus(""), 3000);
       return;
     }
 
     setIsLoading(true);
-    setUploadStatus('RAGに追加中...');
+    setUploadStatus("RAGに追加中...");
 
     try {
       const response = await fetch(`${RAG_BACKEND_URL}/api/documents/upload-text`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           text: editorText,
@@ -285,9 +287,9 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
         const data = await response.json();
         setUploadStatus(`✅ RAGに追加しました: ${data.chunk_count}チャンク作成`);
         // エディタをクリア
-        setEditorText('');
-        setEditorFilename('');
-        setSelectedTemplate('');
+        setEditorText("");
+        setEditorFilename("");
+        setSelectedTemplate("");
         // ドキュメント一覧を更新
         fetchDocuments();
         fetchStats();
@@ -300,11 +302,11 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
         setUploadStatus(`❌ エラー: ${error.detail}`);
       }
     } catch (error) {
-      setUploadStatus('❌ RAGへの追加に失敗しました');
-      console.error('Text upload error:', error);
+      setUploadStatus("❌ RAGへの追加に失敗しました");
+      console.error("Text upload error:", error);
     } finally {
       setIsLoading(false);
-      setTimeout(() => setUploadStatus(''), 3000);
+      setTimeout(() => setUploadStatus(""), 3000);
     }
   };
 
@@ -314,14 +316,14 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
     if (!file) return;
 
     setIsLoading(true);
-    setUploadStatus('アップロード中...');
+    setUploadStatus("アップロード中...");
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
       const response = await fetch(`${RAG_BACKEND_URL}/api/documents/upload`, {
-        method: 'POST',
+        method: "POST",
         body: formData,
       });
 
@@ -335,11 +337,11 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
         setUploadStatus(`❌ エラー: ${error.detail}`);
       }
     } catch (error) {
-      setUploadStatus('❌ アップロードに失敗しました');
-      console.error('Upload error:', error);
+      setUploadStatus("❌ アップロードに失敗しました");
+      console.error("Upload error:", error);
     } finally {
       setIsLoading(false);
-      setTimeout(() => setUploadStatus(''), 3000);
+      setTimeout(() => setUploadStatus(""), 3000);
     }
   };
 
@@ -348,22 +350,25 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
     if (!confirm(`「${filename}」を削除しますか？`)) return;
 
     try {
-      const response = await fetch(`${RAG_BACKEND_URL}/api/documents/${encodeURIComponent(filename)}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `${RAG_BACKEND_URL}/api/documents/${encodeURIComponent(filename)}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (response.ok) {
-        setUploadStatus('✅ 削除しました');
+        setUploadStatus("✅ 削除しました");
         fetchDocuments();
         fetchStats();
       } else {
-        setUploadStatus('❌ 削除に失敗しました');
+        setUploadStatus("❌ 削除に失敗しました");
       }
     } catch (error) {
-      setUploadStatus('❌ 削除に失敗しました');
-      console.error('Delete error:', error);
+      setUploadStatus("❌ 削除に失敗しました");
+      console.error("Delete error:", error);
     } finally {
-      setTimeout(() => setUploadStatus(''), 3000);
+      setTimeout(() => setUploadStatus(""), 3000);
     }
   };
 
@@ -377,7 +382,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
           width: `${size.width}px`,
           height: `${size.height}px`,
           transform: `translate(${position.x}px, ${position.y}px)`,
-          position: 'relative',
+          position: "relative",
         }}
       >
         {/* ヘッダー（ドラッグ可能） */}
@@ -393,7 +398,12 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
             onMouseDown={(e) => e.stopPropagation()}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -424,8 +434,8 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
               onClick={() => setIsTextMode(false)}
               className={`py-2 px-4 rounded-lg font-medium transition-all text-sm ${
                 !isTextMode
-                  ? 'bg-blue-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? "bg-blue-500 text-white shadow-md"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
               📁 ファイル
@@ -434,8 +444,8 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
               onClick={() => setIsTextMode(true)}
               className={`py-2 px-4 rounded-lg font-medium transition-all text-sm ${
                 isTextMode
-                  ? 'bg-blue-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? "bg-blue-500 text-white shadow-md"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
               ✏️ テキスト
@@ -444,26 +454,28 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
         </div>
 
         {/* アップロードセクション（コンパクト） */}
-        <div className={`px-4 py-3 border-b border-gray-200 ${isTextMode ? '' : 'bg-gray-50'}`}>
-
+        <div className={`px-4 py-3 border-b border-gray-200 ${isTextMode ? "" : "bg-gray-50"}`}>
           {!isTextMode ? (
             // ファイルアップロードモード
-            <>
-              <label className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all cursor-pointer shadow-md hover:shadow-lg">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                <span className="font-bold">ファイルをアップロード</span>
-                <span className="text-xs opacity-80">(.txt, .md, .pdf)</span>
-                <input
-                  type="file"
-                  accept=".txt,.md,.pdf"
-                  onChange={handleFileUpload}
-                  disabled={isLoading}
-                  className="hidden"
+            <label className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all cursor-pointer shadow-md hover:shadow-lg">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                 />
-              </label>
-            </>
+              </svg>
+              <span className="font-bold">ファイルをアップロード</span>
+              <span className="text-xs opacity-80">(.txt, .md, .pdf)</span>
+              <input
+                type="file"
+                accept=".txt,.md,.pdf"
+                onChange={handleFileUpload}
+                disabled={isLoading}
+                className="hidden"
+              />
+            </label>
           ) : (
             // テキストエディタモード - 横並びレイアウト
             <div className="flex gap-3 items-end">
@@ -505,9 +517,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
           )}
 
           {uploadStatus && (
-            <div className="mt-3 text-center text-sm font-medium">
-              {uploadStatus}
-            </div>
+            <div className="mt-3 text-center text-sm font-medium">{uploadStatus}</div>
           )}
         </div>
 
@@ -526,7 +536,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                   disabled={isLoading || !editorText.trim() || !editorFilename.trim()}
                   className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all font-bold shadow-md hover:shadow-lg"
                 >
-                  {isLoading ? '追加中...' : 'RAGに追加'}
+                  {isLoading ? "追加中..." : "RAGに追加"}
                 </button>
               </div>
               <textarea
@@ -535,7 +545,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                 placeholder="ここにテキストを入力するか、上のテンプレートを選択してください...&#10;&#10;展示会の他ブース情報などを追加して、来場者がAIチャットで質問できるようにしましょう！"
                 className="flex-1 w-full p-4 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none font-mono text-sm leading-relaxed"
                 disabled={isLoading}
-                style={{ minHeight: '400px' }}
+                style={{ minHeight: "400px" }}
               />
             </div>
           ) : viewingDocument && documentContent ? (
@@ -548,26 +558,52 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                   className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                    />
                   </svg>
                   <span>一覧に戻る</span>
                 </button>
                 <h3 className="text-xl font-bold text-gray-900 mt-4 flex items-center gap-2">
-                  <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  <svg
+                    className="w-6 h-6 text-blue-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
                   </svg>
                   {documentContent.filename}
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
                   総チャンク数: {documentContent.total_chunks}
-                  {searchQuery && ` | マッチ: ${documentContent.chunks.filter(chunkMatchesSearch).length}件`}
+                  {searchQuery &&
+                    ` | マッチ: ${documentContent.chunks.filter(chunkMatchesSearch).length}件`}
                 </p>
 
                 {/* 検索ボックス */}
                 <div className="mt-4">
                   <div className="flex items-center gap-2 border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
-                    <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    <svg
+                      className="w-4 h-4 text-gray-400 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
                     </svg>
                     <input
                       type="text"
@@ -578,12 +614,22 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                     />
                     {searchQuery && (
                       <button
-                        onClick={() => setSearchQuery('')}
+                        onClick={() => setSearchQuery("")}
                         className="text-gray-400 hover:text-gray-600 flex-shrink-0"
                         type="button"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
                         </svg>
                       </button>
                     )}
@@ -602,25 +648,35 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                       <span className="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded">
                         チャンク {chunk.chunk_index + 1}
                       </span>
-                      <span className="text-xs text-gray-500">
-                        {chunk.char_count} 文字
-                      </span>
+                      <span className="text-xs text-gray-500">{chunk.char_count} 文字</span>
                     </div>
                     <div
                       className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed"
                       dangerouslySetInnerHTML={{
-                        __html: highlightText(chunk.content, searchQuery)
+                        __html: highlightText(chunk.content, searchQuery),
                       }}
                     />
                   </div>
                 ))}
                 {documentContent.chunks.filter(chunkMatchesSearch).length === 0 && (
                   <div className="text-center py-12 text-gray-400">
-                    <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    <svg
+                      className="w-16 h-16 mx-auto mb-4 opacity-50"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
                     </svg>
                     <p className="text-lg font-medium">検索結果なし</p>
-                    <p className="text-sm mt-2">「{searchQuery}」に一致するチャンクが見つかりませんでした</p>
+                    <p className="text-sm mt-2">
+                      「{searchQuery}」に一致するチャンクが見つかりませんでした
+                    </p>
                   </div>
                 )}
               </div>
@@ -634,8 +690,18 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
           ) : documents.length === 0 ? (
             // ドキュメントがない場合
             <div className="text-center py-12 text-gray-400">
-              <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <svg
+                className="w-16 h-16 mx-auto mb-4 opacity-50"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
               </svg>
               <p className="text-lg font-medium">ドキュメントがありません</p>
               <p className="text-sm mt-2">上のボタンからファイルをアップロードしてください</p>
@@ -652,8 +718,18 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <svg className="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        <svg
+                          className="w-5 h-5 text-blue-500 flex-shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
                         </svg>
                         <h3 className="font-bold text-gray-900 truncate">{doc.filename}</h3>
                         <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
@@ -662,7 +738,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                       </div>
                       <div className="flex items-center gap-4 text-sm text-gray-600">
                         <span>📊 {doc.chunk_count} チャンク</span>
-                        <span>🕒 {new Date(doc.upload_timestamp).toLocaleString('ja-JP')}</span>
+                        <span>🕒 {new Date(doc.upload_timestamp).toLocaleString("ja-JP")}</span>
                       </div>
                       <div className="mt-2 text-xs text-blue-600 font-medium">
                         クリックして内容を表示 →
@@ -677,7 +753,11 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                       aria-label="削除"
                     >
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                        <path
+                          fillRule="evenodd"
+                          d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     </button>
                   </div>
@@ -705,7 +785,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
           className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize"
           onMouseDown={handleResizeStart}
           style={{
-            background: 'linear-gradient(135deg, transparent 50%, #cbd5e1 50%)',
+            background: "linear-gradient(135deg, transparent 50%, #cbd5e1 50%)",
           }}
         />
       </div>

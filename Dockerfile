@@ -12,6 +12,9 @@ RUN npm ci
 # Copy application files
 COPY . .
 
+# Run lint check before building
+RUN npm run lint:check
+
 # Build the application
 RUN npm run build
 

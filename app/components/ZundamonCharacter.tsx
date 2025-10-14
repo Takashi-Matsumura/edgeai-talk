@@ -1,5 +1,5 @@
-import { useRef, useEffect, useState } from 'react';
-import { TtsEngine } from '../types';
+import { useEffect, useRef, useState } from "react";
+import type { TtsEngine } from "../types";
 
 interface ZundamonSpeakingProps {
   actualEngine: TtsEngine;
@@ -10,14 +10,14 @@ export function ZundamonSpeaking({ actualEngine }: ZundamonSpeakingProps) {
   const [videoError, setVideoError] = useState(false);
 
   useEffect(() => {
-    if (actualEngine === 'voicevox' && videoRef.current) {
+    if (actualEngine === "voicevox" && videoRef.current) {
       videoRef.current.play().catch((error) => {
-        console.error('Video autoplay failed:', error);
+        console.error("Video autoplay failed:", error);
       });
     }
   }, [actualEngine]);
 
-  if (actualEngine !== 'voicevox') return null;
+  if (actualEngine !== "voicevox") return null;
 
   return (
     <div className="fixed bottom-24 right-8 z-50">
@@ -38,14 +38,14 @@ export function ZundamonSpeaking({ actualEngine }: ZundamonSpeakingProps) {
               preload="auto"
               className="w-full h-full object-cover"
               onError={(e) => {
-                console.error('Video load error:', e);
+                console.error("Video load error:", e);
                 setVideoError(true);
               }}
               onLoadedData={() => {
-                console.log('Video loaded successfully');
+                console.log("Video loaded successfully");
                 setVideoError(false);
                 videoRef.current?.play().catch((err) => {
-                  console.error('Play failed:', err);
+                  console.error("Play failed:", err);
                   setVideoError(true);
                 });
               }}
@@ -70,7 +70,12 @@ interface ZundamonListeningProps {
   disabled?: boolean;
 }
 
-export function ZundamonListening({ isRecording, onStart, onStop, disabled }: ZundamonListeningProps) {
+export function ZundamonListening({
+  isRecording,
+  onStart,
+  onStop,
+  disabled,
+}: ZundamonListeningProps) {
   const zundamonRef = useRef<HTMLDivElement>(null);
   const sleepVideoRef = useRef<HTMLVideoElement>(null);
   const wakeupVideoRef = useRef<HTMLVideoElement>(null);
@@ -96,25 +101,25 @@ export function ZundamonListening({ isRecording, onStart, onStop, disabled }: Zu
       onStop();
     };
 
-    element.addEventListener('touchstart', handleTouchStart, { passive: false });
-    element.addEventListener('touchend', handleTouchEnd, { passive: false });
-    element.addEventListener('touchcancel', handleTouchCancel, { passive: false });
+    element.addEventListener("touchstart", handleTouchStart, { passive: false });
+    element.addEventListener("touchend", handleTouchEnd, { passive: false });
+    element.addEventListener("touchcancel", handleTouchCancel, { passive: false });
 
     return () => {
-      element.removeEventListener('touchstart', handleTouchStart);
-      element.removeEventListener('touchend', handleTouchEnd);
-      element.removeEventListener('touchcancel', handleTouchCancel);
+      element.removeEventListener("touchstart", handleTouchStart);
+      element.removeEventListener("touchend", handleTouchEnd);
+      element.removeEventListener("touchcancel", handleTouchCancel);
     };
   }, [disabled, onStart, onStop]);
 
   useEffect(() => {
     if (isRecording && wakeupVideoRef.current) {
       wakeupVideoRef.current.play().catch((error) => {
-        console.error('Wakeup video autoplay failed:', error);
+        console.error("Wakeup video autoplay failed:", error);
       });
     } else if (!isRecording && sleepVideoRef.current) {
       sleepVideoRef.current.play().catch((error) => {
-        console.error('Sleep video autoplay failed:', error);
+        console.error("Sleep video autoplay failed:", error);
       });
     }
   }, [isRecording]);
@@ -125,7 +130,12 @@ export function ZundamonListening({ isRecording, onStart, onStop, disabled }: Zu
     <div
       ref={zundamonRef}
       className="fixed bottom-8 left-8 z-50 select-none transition-opacity opacity-100"
-      style={{ touchAction: 'none', cursor: 'pointer', WebkitUserSelect: 'none', WebkitTouchCallout: 'none' }}
+      style={{
+        touchAction: "none",
+        cursor: "pointer",
+        WebkitUserSelect: "none",
+        WebkitTouchCallout: "none",
+      }}
       onMouseDown={onStart}
       onMouseUp={onStop}
       onMouseLeave={onStop}
@@ -143,9 +153,11 @@ export function ZundamonListening({ isRecording, onStart, onStop, disabled }: Zu
           </div>
         )}
 
-        <div className={`w-32 h-32 rounded-full overflow-hidden shadow-2xl border-4 border-white dark:border-gray-700 bg-gradient-to-br from-green-400 to-green-600 transition-all ${
-          isRecording ? 'scale-110' : 'scale-100 opacity-70'
-        }`}>
+        <div
+          className={`w-32 h-32 rounded-full overflow-hidden shadow-2xl border-4 border-white dark:border-gray-700 bg-gradient-to-br from-green-400 to-green-600 transition-all ${
+            isRecording ? "scale-110" : "scale-100 opacity-70"
+          }`}
+        >
           {isRecording ? (
             !wakeupVideoError ? (
               <video
@@ -158,11 +170,11 @@ export function ZundamonListening({ isRecording, onStart, onStop, disabled }: Zu
                 preload="auto"
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  console.error('Wakeup video load error:', e);
+                  console.error("Wakeup video load error:", e);
                   setWakeupVideoError(true);
                 }}
                 onLoadedData={() => {
-                  console.log('Wakeup video loaded successfully');
+                  console.log("Wakeup video loaded successfully");
                   setWakeupVideoError(false);
                 }}
               />
@@ -171,31 +183,29 @@ export function ZundamonListening({ isRecording, onStart, onStop, disabled }: Zu
                 <div className="text-6xl">👂</div>
               </div>
             )
+          ) : !sleepVideoError ? (
+            <video
+              ref={sleepVideoRef}
+              src="/movie/sleep_web.mp4"
+              loop
+              muted
+              playsInline
+              autoPlay
+              preload="auto"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                console.error("Sleep video load error:", e);
+                setSleepVideoError(true);
+              }}
+              onLoadedData={() => {
+                console.log("Sleep video loaded successfully");
+                setSleepVideoError(false);
+              }}
+            />
           ) : (
-            !sleepVideoError ? (
-              <video
-                ref={sleepVideoRef}
-                src="/movie/sleep_web.mp4"
-                loop
-                muted
-                playsInline
-                autoPlay
-                preload="auto"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  console.error('Sleep video load error:', e);
-                  setSleepVideoError(true);
-                }}
-                onLoadedData={() => {
-                  console.log('Sleep video loaded successfully');
-                  setSleepVideoError(false);
-                }}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="text-6xl rotate-90">😴</div>
-              </div>
-            )
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="text-6xl rotate-90">😴</div>
+            </div>
           )}
         </div>
 

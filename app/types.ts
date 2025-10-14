@@ -1,9 +1,9 @@
 export type Message = {
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
 };
 
-export type TtsEngine = 'browser' | 'voicevox';
+export type TtsEngine = "browser" | "voicevox";
 
 export interface SpeechRecognitionType {
   start: () => void;

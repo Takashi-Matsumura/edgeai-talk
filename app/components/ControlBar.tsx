@@ -1,4 +1,4 @@
-import { useRef, useEffect, FormEvent } from 'react';
+import { type FormEvent, useEffect, useRef } from "react";
 
 interface ControlBarProps {
   input: string;
@@ -44,19 +44,22 @@ export function ControlBar({
       onStopRecording();
     };
 
-    element.addEventListener('touchstart', handleTouchStart, { passive: false });
-    element.addEventListener('touchend', handleTouchEnd, { passive: false });
-    element.addEventListener('touchcancel', handleTouchCancel, { passive: false });
+    element.addEventListener("touchstart", handleTouchStart, { passive: false });
+    element.addEventListener("touchend", handleTouchEnd, { passive: false });
+    element.addEventListener("touchcancel", handleTouchCancel, { passive: false });
 
     return () => {
-      element.removeEventListener('touchstart', handleTouchStart);
-      element.removeEventListener('touchend', handleTouchEnd);
-      element.removeEventListener('touchcancel', handleTouchCancel);
+      element.removeEventListener("touchstart", handleTouchStart);
+      element.removeEventListener("touchend", handleTouchEnd);
+      element.removeEventListener("touchcancel", handleTouchCancel);
     };
   }, [onStartRecording, onStopRecording]);
 
   return (
-    <div className="flex-shrink-0 bg-white/95 backdrop-blur-sm border-t-4 border-orange-500 px-4 py-5 relative shadow-2xl" style={{ zIndex: 30 }}>
+    <div
+      className="flex-shrink-0 bg-white/95 backdrop-blur-sm border-t-4 border-orange-500 px-4 py-5 relative shadow-2xl"
+      style={{ zIndex: 30 }}
+    >
       <form onSubmit={onSubmit} className="flex items-center gap-3">
         <button
           ref={micButtonRef}
@@ -65,15 +68,15 @@ export function ControlBar({
           disabled={!isSpeechSupported}
           className={`flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 touch-none shadow-xl border-2 ${
             isRecording
-              ? 'bg-red-500 text-white border-red-400 scale-110 animate-pulse'
+              ? "bg-red-500 text-white border-red-400 scale-110 animate-pulse"
               : isSpeechSupported
-              ? 'bg-gray-100 text-gray-700 border-gray-300 hover:scale-105 hover:bg-gray-200'
-              : 'bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed opacity-50'
+                ? "bg-gray-100 text-gray-700 border-gray-300 hover:scale-105 hover:bg-gray-200"
+                : "bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed opacity-50"
           }`}
           aria-label="音声入力"
           style={{
-            WebkitUserSelect: 'none',
-            WebkitTouchCallout: 'none',
+            WebkitUserSelect: "none",
+            WebkitTouchCallout: "none",
           }}
         >
           <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
@@ -109,7 +112,11 @@ export function ControlBar({
           aria-label="クリア"
         >
           <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+            <path
+              fillRule="evenodd"
+              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+              clipRule="evenodd"
+            />
           </svg>
         </button>
       </form>

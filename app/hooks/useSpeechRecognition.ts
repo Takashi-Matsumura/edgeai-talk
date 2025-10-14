@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { SpeechRecognitionType } from '../types';
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { SpeechRecognitionType } from "../types";
 
 interface UseSpeechRecognitionProps {
   onTranscript: (text: string) => void;
@@ -10,23 +10,26 @@ export function useSpeechRecognition({ onTranscript, onEnd }: UseSpeechRecogniti
   const [isRecording, setIsRecording] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionType | null>(null);
-  const transcriptRef = useRef('');
+  const transcriptRef = useRef("");
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognitionAPI =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (SpeechRecognitionAPI) {
       const recognition = new SpeechRecognitionAPI();
-      recognition.lang = 'ja-JP';
+      recognition.lang = "ja-JP";
       recognition.continuous = true;
       recognition.interimResults = true;
 
       recognition.onresult = (event: unknown) => {
-        const results = (event as { results: { length: number; [key: number]: { 0: { transcript: string } } } }).results;
-        let transcript = '';
+        const results = (
+          event as { results: { length: number; [key: number]: { 0: { transcript: string } } } }
+        ).results;
+        let transcript = "";
 
         for (let i = 0; i < results.length; i++) {
           transcript += results[i][0].transcript;
@@ -37,14 +40,14 @@ export function useSpeechRecognition({ onTranscript, onEnd }: UseSpeechRecogniti
       };
 
       recognition.onerror = (event: unknown) => {
-        console.error('Speech recognition error:', (event as { error: string }).error);
+        console.error("Speech recognition error:", (event as { error: string }).error);
         setIsRecording(false);
       };
 
       recognition.onend = () => {
         setIsRecording(false);
         const finalTranscript = transcriptRef.current.trim();
-        transcriptRef.current = '';
+        transcriptRef.current = "";
 
         if (finalTranscript) {
           setTimeout(() => onEnd(finalTranscript), 100);
@@ -60,11 +63,11 @@ export function useSpeechRecognition({ onTranscript, onEnd }: UseSpeechRecogniti
     if (!recognitionRef.current || isRecording) return;
 
     try {
-      transcriptRef.current = '';
+      transcriptRef.current = "";
       recognitionRef.current.start();
       setIsRecording(true);
     } catch (error) {
-      console.error('Failed to start recording:', error);
+      console.error("Failed to start recording:", error);
       setIsRecording(false);
     }
   }, [isRecording]);
