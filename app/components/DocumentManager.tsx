@@ -57,6 +57,9 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
 
+  // 検索機能用の状態
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
   // ドラッグ&ドロップとリサイズ用の状態
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [size, setSize] = useState({ width: 900, height: 700 });
@@ -200,6 +203,27 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
   const closeDocumentView = () => {
     setViewingDocument(null);
     setDocumentContent(null);
+    setSearchQuery('');
+  };
+
+  // 検索キーワードをハイライト表示する関数
+  const highlightText = (text: string, query: string) => {
+    if (!query.trim()) return text;
+
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+
+    return parts.map((part, index) =>
+      regex.test(part)
+        ? `<mark class="bg-yellow-300 px-1 rounded">${part}</mark>`
+        : part
+    ).join('');
+  };
+
+  // チャンクが検索クエリにマッチするかチェック
+  const chunkMatchesSearch = (chunk: DocumentChunk) => {
+    if (!searchQuery.trim()) return true;
+    return chunk.content.toLowerCase().includes(searchQuery.toLowerCase());
   };
 
   // テンプレート選択時の処理
@@ -516,9 +540,9 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
             </div>
           ) : viewingDocument && documentContent ? (
             // ドキュメント内容表示
-            <div className="space-y-4">
-              {/* 戻るボタン */}
-              <div className="sticky top-0 bg-white pb-4 border-b border-gray-200">
+            <div className="h-full flex flex-col">
+              {/* ヘッダー（固定） */}
+              <div className="flex-shrink-0 pb-4 border-b border-gray-200">
                 <button
                   onClick={closeDocumentView}
                   className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
@@ -536,12 +560,40 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
                   総チャンク数: {documentContent.total_chunks}
+                  {searchQuery && ` | マッチ: ${documentContent.chunks.filter(chunkMatchesSearch).length}件`}
                 </p>
+
+                {/* 検索ボックス */}
+                <div className="mt-4">
+                  <div className="flex items-center gap-2 border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
+                    <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="キーワードで検索..."
+                      className="flex-1 outline-none text-sm"
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery('')}
+                        className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+                        type="button"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              {/* チャンク一覧 */}
-              <div className="space-y-4">
-                {documentContent.chunks.map((chunk) => (
+              {/* チャンク一覧（スクロール可能） */}
+              <div className="flex-1 overflow-y-auto mt-4 pr-2 space-y-4">
+                {documentContent.chunks.filter(chunkMatchesSearch).map((chunk) => (
                   <div
                     key={chunk.chunk_index}
                     className="bg-gray-50 rounded-xl p-4 border border-gray-200"
@@ -554,11 +606,23 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                         {chunk.char_count} 文字
                       </span>
                     </div>
-                    <div className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
-                      {chunk.content}
-                    </div>
+                    <div
+                      className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed"
+                      dangerouslySetInnerHTML={{
+                        __html: highlightText(chunk.content, searchQuery)
+                      }}
+                    />
                   </div>
                 ))}
+                {documentContent.chunks.filter(chunkMatchesSearch).length === 0 && (
+                  <div className="text-center py-12 text-gray-400">
+                    <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <p className="text-lg font-medium">検索結果なし</p>
+                    <p className="text-sm mt-2">「{searchQuery}」に一致するチャンクが見つかりませんでした</p>
+                  </div>
+                )}
               </div>
             </div>
           ) : isLoadingContent ? (
