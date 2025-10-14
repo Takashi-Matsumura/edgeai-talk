@@ -38,7 +38,7 @@ services:
       - EMBEDDING_MODEL=intfloat/multilingual-e5-large
       - LM_STUDIO_BASE_URL=http://host.docker.internal:1234/v1
       - LM_STUDIO_MODEL=google/gemma-3n-e4b
-      - CORS_ORIGINS=http://localhost:3500,http://app:3000
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:3500,http://app:3000
     volumes:
       - rag-data:/app/chroma_data
       - ./backend/sample_data:/app/sample_data:ro

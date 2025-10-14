@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 
+// RAGバックエンドのベースURL
+const RAG_BACKEND_URL = process.env.NEXT_PUBLIC_RAG_BACKEND_URL || 'http://localhost:8000';
+
 interface DocumentInfo {
   filename: string;
   chunk_count: number;
@@ -65,7 +68,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
   // ドキュメント一覧を取得
   const fetchDocuments = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/documents/list');
+      const response = await fetch(`${RAG_BACKEND_URL}/api/documents/list`);
       if (response.ok) {
         const data = await response.json();
         setDocuments(data.documents || []);
@@ -78,7 +81,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
   // 統計情報を取得
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/rag/stats');
+      const response = await fetch(`${RAG_BACKEND_URL}/api/rag/stats`);
       if (response.ok) {
         const data = await response.json();
         setStats(data);
@@ -91,7 +94,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
   // テンプレート一覧を取得
   const fetchTemplates = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/documents/templates');
+      const response = await fetch(`${RAG_BACKEND_URL}/api/documents/templates`);
       if (response.ok) {
         const data = await response.json();
         setTemplates(data.templates || []);
@@ -175,7 +178,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
   const fetchDocumentContent = async (filename: string) => {
     setIsLoadingContent(true);
     try {
-      const response = await fetch(`http://localhost:8000/api/documents/content/${encodeURIComponent(filename)}`);
+      const response = await fetch(`${RAG_BACKEND_URL}/api/documents/content/${encodeURIComponent(filename)}`);
       if (response.ok) {
         const data = await response.json();
         setDocumentContent(data);
@@ -208,7 +211,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/api/documents/templates/${templateId}`);
+      const response = await fetch(`${RAG_BACKEND_URL}/api/documents/templates/${templateId}`);
       if (response.ok) {
         const data = await response.json();
         setEditorText(data.content);
@@ -243,7 +246,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
     setUploadStatus('RAGに追加中...');
 
     try {
-      const response = await fetch('http://localhost:8000/api/documents/upload-text', {
+      const response = await fetch(`${RAG_BACKEND_URL}/api/documents/upload-text`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -293,7 +296,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('http://localhost:8000/api/documents/upload', {
+      const response = await fetch(`${RAG_BACKEND_URL}/api/documents/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -321,7 +324,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
     if (!confirm(`「${filename}」を削除しますか？`)) return;
 
     try {
-      const response = await fetch(`http://localhost:8000/api/documents/delete/${encodeURIComponent(filename)}`, {
+      const response = await fetch(`${RAG_BACKEND_URL}/api/documents/delete/${encodeURIComponent(filename)}`, {
         method: 'DELETE',
       });
 
