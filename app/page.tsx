@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { FaBullseye, FaDatabase, FaLightbulb, FaLock, FaStar, FaVolumeUp } from "react-icons/fa";
 import { ChatMessage, LoadingIndicator } from "./components/ChatMessage";
 import { ControlBar } from "./components/ControlBar";
 import { DocumentManager } from "./components/DocumentManager";
@@ -269,26 +270,26 @@ export default function Home() {
               onMouseLeave={handleRagMouseUp}
               onTouchStart={handleRagMouseDown}
               onTouchEnd={handleRagMouseUp}
-              className="px-6 py-3 rounded-full backdrop-blur-sm shadow-lg hover:scale-105 transition-all duration-300 hover:shadow-xl font-bold text-white text-lg"
+              className="w-12 h-12 rounded-full backdrop-blur-sm shadow-lg hover:scale-105 transition-all duration-300 hover:shadow-xl flex items-center justify-center"
               style={{
                 backgroundColor: isRagEnabled ? "#6366f1" : "#d1d5db",
               }}
               aria-label="RAG機能切替（長押しでRAG管理）"
             >
-              RAG
+              <FaDatabase className="text-xl text-white" />
             </button>
 
             {/* 音声シンプルトグルボタン */}
             {isTtsSupported && (
               <button
                 onClick={() => setIsTtsEnabled(!isTtsEnabled)}
-                className="px-6 py-3 rounded-full backdrop-blur-sm shadow-lg hover:scale-105 transition-all duration-300 hover:shadow-xl font-bold text-white text-lg"
+                className="w-12 h-12 rounded-full backdrop-blur-sm shadow-lg hover:scale-105 transition-all duration-300 hover:shadow-xl flex items-center justify-center"
                 style={{
                   backgroundColor: isTtsEnabled ? "#fb923c" : "#d1d5db",
                 }}
                 aria-label="音声機能切替"
               >
-                音声
+                <FaVolumeUp className="text-xl text-white" />
               </button>
             )}
 
@@ -352,17 +353,17 @@ export default function Home() {
                 className="text-2xl md:text-3xl font-bold text-white leading-relaxed max-w-2xl mx-auto px-4"
                 style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}
               >
-                エッジAI - クラウド接続なしで高速レスポンス
+                エッジAI - 柔軟なAI組込みアプリ開発を実現
               </p>
             </div>
 
             {/* Suggestion Buttons */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-3xl">
               {[
-                { icon: "🌤️", text: "今日の天気を教えて", question: "今日の天気を教えて" },
-                { icon: "🍳", text: "おすすめのレシピは？", question: "おすすめのレシピを教えて" },
-                { icon: "💡", text: "AIについて教えて", question: "AIについて簡単に教えて" },
-                { icon: "🎯", text: "何ができるの？", question: "あなたは何ができますか？" },
+                { icon: FaStar, text: "このアプリの特徴は？", question: "このアプリの特徴を教えて", color: "text-yellow-500" },
+                { icon: FaLock, text: "プライバシー保護について", question: "このシステムはどのようにプライバシーを保護していますか？", color: "text-green-600" },
+                { icon: FaLightbulb, text: "AIについて教えて", question: "AIについて簡単に教えて", color: "text-blue-500" },
+                { icon: FaBullseye, text: "エッジAIとは何ですか？", question: "エッジAIとは何ですか？", color: "text-red-500" },
               ].map((suggestion, idx) => (
                 <button
                   key={idx}
@@ -374,9 +375,7 @@ export default function Home() {
                   style={{ animationDelay: `${idx * 100}ms` }}
                 >
                   <div className="flex items-center gap-4">
-                    <span className="text-4xl group-hover:scale-125 transition-transform duration-300">
-                      {suggestion.icon}
-                    </span>
+                    <suggestion.icon className={`text-4xl group-hover:scale-125 transition-transform duration-300 ${suggestion.color}`} />
                     <span className="text-xl font-bold text-gray-800">{suggestion.text}</span>
                   </div>
                 </button>
