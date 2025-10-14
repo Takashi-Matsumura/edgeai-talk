@@ -324,7 +324,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
     if (!confirm(`「${filename}」を削除しますか？`)) return;
 
     try {
-      const response = await fetch(`${RAG_BACKEND_URL}/api/documents/delete/${encodeURIComponent(filename)}`, {
+      const response = await fetch(`${RAG_BACKEND_URL}/api/documents/${encodeURIComponent(filename)}`, {
         method: 'DELETE',
       });
 
