@@ -18,6 +18,7 @@ export default function Home() {
   const [isRagEnabled, setIsRagEnabled] = useState(true); // RAG機能のON/OFF
   const [isDocManagerOpen, setIsDocManagerOpen] = useState(false); // ドキュメント管理モーダル
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const ragLongPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const { unlock } = useAudioUnlock();
   const {
@@ -162,6 +163,38 @@ export default function Home() {
     startRecording();
   };
 
+  // RAG長押し開始
+  const handleRagMouseDown = () => {
+    ragLongPressTimerRef.current = setTimeout(() => {
+      setIsDocManagerOpen(true);
+    }, 500); // 500msで長押しと判定
+  };
+
+  // RAG長押し終了/キャンセル
+  const handleRagMouseUp = () => {
+    if (ragLongPressTimerRef.current) {
+      clearTimeout(ragLongPressTimerRef.current);
+      ragLongPressTimerRef.current = null;
+    }
+  };
+
+  // RAGクリック（短押し）でトグル
+  const handleRagClick = () => {
+    // 長押しタイマーが残っていない場合のみトグル
+    if (!ragLongPressTimerRef.current) {
+      setIsRagEnabled(!isRagEnabled);
+    }
+  };
+
+  // タイマーのクリーンアップ
+  useEffect(() => {
+    return () => {
+      if (ragLongPressTimerRef.current) {
+        clearTimeout(ragLongPressTimerRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-orange-100 via-orange-200 to-orange-300 dark:from-orange-300 dark:via-orange-400 dark:to-orange-500 gradient-animate relative">
       {/* Decorative elements */}
@@ -216,45 +249,36 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {/* RAGトグルスイッチ */}
-            <div className="flex items-center gap-2 bg-blue-100 px-3 py-2 rounded-full border-2 border-blue-300">
-              <span className="text-base font-bold text-gray-800">RAG</span>
+            {/* RAGシンプルトグルボタン */}
+            <button
+              onClick={handleRagClick}
+              onMouseDown={handleRagMouseDown}
+              onMouseUp={handleRagMouseUp}
+              onMouseLeave={handleRagMouseUp}
+              onTouchStart={handleRagMouseDown}
+              onTouchEnd={handleRagMouseUp}
+              className="px-6 py-3 rounded-full backdrop-blur-sm shadow-lg hover:scale-105 transition-all duration-300 hover:shadow-xl font-bold text-white text-lg"
+              style={{
+                backgroundColor: isRagEnabled ? "#3b82f6" : "#d1d5db",
+              }}
+              aria-label="RAG機能切替（長押しでドキュメント管理）"
+            >
+              RAG
+            </button>
+
+            {/* 音声シンプルトグルボタン */}
+            {isTtsSupported && (
               <button
-                onClick={() => setIsRagEnabled(!isRagEnabled)}
-                className="relative inline-flex h-9 w-16 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-md hover:scale-105 border-2"
+                onClick={() => setIsTtsEnabled(!isTtsEnabled)}
+                className="px-6 py-3 rounded-full backdrop-blur-sm shadow-lg hover:scale-105 transition-all duration-300 hover:shadow-xl font-bold text-white text-lg"
                 style={{
-                  backgroundColor: isRagEnabled ? "#3b82f6" : "#d1d5db",
-                  borderColor: isRagEnabled ? "#2563eb" : "#9ca3af",
+                  backgroundColor: isTtsEnabled ? "#fb923c" : "#d1d5db",
                 }}
-                aria-label="RAG機能切替"
+                aria-label="音声機能切替"
               >
-                <span
-                  className={`inline-block h-7 w-7 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${
-                    isRagEnabled ? "translate-x-8" : "translate-x-0.5"
-                  }`}
-                />
+                音声
               </button>
-              <span
-                className={`text-base font-bold ${isRagEnabled ? "text-blue-600" : "text-gray-500"}`}
-              >
-                {isRagEnabled ? "ON" : "OFF"}
-              </span>
-              <button
-                onClick={() => setIsDocManagerOpen(true)}
-                className="ml-1 w-9 h-9 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 hover:scale-110 transition-all duration-300 shadow-lg"
-                aria-label="ドキュメント管理"
-                title="ドキュメント管理"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              </button>
-            </div>
+            )}
 
             {isTtsEnabled && messages.length > 0 && (
               <button
@@ -270,31 +294,6 @@ export default function Home() {
                   />
                 </svg>
               </button>
-            )}
-            {isTtsSupported && (
-              <div className="flex items-center gap-3 bg-gray-100 px-3 py-2 rounded-full border-2 border-gray-300">
-                <span className="text-base font-bold text-gray-800">音声</span>
-                <button
-                  onClick={() => setIsTtsEnabled(!isTtsEnabled)}
-                  className="relative inline-flex h-9 w-16 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 shadow-md hover:scale-105 border-2"
-                  style={{
-                    backgroundColor: isTtsEnabled ? "#f97316" : "#d1d5db",
-                    borderColor: isTtsEnabled ? "#ea580c" : "#9ca3af",
-                  }}
-                  aria-label="音声読み上げ切替"
-                >
-                  <span
-                    className={`inline-block h-7 w-7 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${
-                      isTtsEnabled ? "translate-x-8" : "translate-x-0.5"
-                    }`}
-                  />
-                </button>
-                <span
-                  className={`text-base font-bold ${isTtsEnabled ? "text-orange-600" : "text-gray-500"}`}
-                >
-                  {isTtsEnabled ? "ON" : "OFF"}
-                </span>
-              </div>
             )}
           </div>
         </div>
