@@ -163,9 +163,14 @@ export default function Home() {
     startRecording();
   };
 
+  // 長押し判定用のフラグ
+  const isLongPress = useRef(false);
+
   // RAG長押し開始
   const handleRagMouseDown = () => {
+    isLongPress.current = false;
     ragLongPressTimerRef.current = setTimeout(() => {
+      isLongPress.current = true;
       setIsDocManagerOpen(true);
     }, 500); // 500msで長押しと判定
   };
@@ -176,14 +181,14 @@ export default function Home() {
       clearTimeout(ragLongPressTimerRef.current);
       ragLongPressTimerRef.current = null;
     }
-  };
 
-  // RAGクリック（短押し）でトグル
-  const handleRagClick = () => {
-    // 長押しタイマーが残っていない場合のみトグル
-    if (!ragLongPressTimerRef.current) {
+    // 短押しの場合のみトグル
+    if (!isLongPress.current) {
       setIsRagEnabled(!isRagEnabled);
     }
+
+    // フラグをリセット
+    isLongPress.current = false;
   };
 
   // タイマーのクリーンアップ
@@ -251,7 +256,6 @@ export default function Home() {
           <div className="flex items-center gap-3">
             {/* RAGシンプルトグルボタン */}
             <button
-              onClick={handleRagClick}
               onMouseDown={handleRagMouseDown}
               onMouseUp={handleRagMouseUp}
               onMouseLeave={handleRagMouseUp}
@@ -259,9 +263,9 @@ export default function Home() {
               onTouchEnd={handleRagMouseUp}
               className="px-6 py-3 rounded-full backdrop-blur-sm shadow-lg hover:scale-105 transition-all duration-300 hover:shadow-xl font-bold text-white text-lg"
               style={{
-                backgroundColor: isRagEnabled ? "#3b82f6" : "#d1d5db",
+                backgroundColor: isRagEnabled ? "#6366f1" : "#d1d5db",
               }}
-              aria-label="RAG機能切替（長押しでドキュメント管理）"
+              aria-label="RAG機能切替（長押しでRAG管理）"
             >
               RAG
             </button>

@@ -123,7 +123,8 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
       setPosition({ x: 0, y: 0 });
       setSize({ width: 900, height: 700 });
     }
-  }, [isOpen, fetchDocuments, fetchStats, fetchTemplates]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   // ドラッグ開始
   const handleDragStart = (e: React.MouseEvent) => {
@@ -387,10 +388,10 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
       >
         {/* ヘッダー（ドラッグ可能） */}
         <div
-          className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4 flex items-center justify-between cursor-move select-none"
+          className="bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-4 flex items-center justify-between cursor-move select-none"
           onMouseDown={handleDragStart}
         >
-          <h2 className="text-2xl font-bold text-white">📚 ドキュメント管理</h2>
+          <h2 className="text-2xl font-bold text-white">📚 RAG管理</h2>
           <button
             onClick={onClose}
             className="text-white hover:bg-white/20 rounded-full p-2 transition-all"
@@ -408,57 +409,60 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
           </button>
         </div>
 
-        {/* 統計情報とモード切り替えを横並びに */}
-        <div className="px-4 py-3 bg-blue-50 border-b border-blue-200 flex items-center justify-between gap-4">
-          {/* 統計情報（コンパクト） */}
-          {stats && (
-            <div className="flex gap-6 text-sm">
-              <div>
-                <span className="font-bold text-blue-600">{stats.unique_documents}</span>
-                <span className="text-gray-600 ml-1">ドキュメント</span>
+        {/* 統計情報とモード切り替えを横並びに（ドキュメント閲覧中は非表示） */}
+        {!viewingDocument && (
+          <div className="px-4 py-3 bg-indigo-50 border-b border-indigo-200 flex items-center justify-between gap-4">
+            {/* 統計情報（コンパクト） */}
+            {stats && (
+              <div className="flex gap-6 text-base">
+                <div>
+                  <span className="font-bold text-indigo-600 text-lg">{stats.unique_documents}</span>
+                  <span className="text-gray-600 ml-1">ドキュメント</span>
+                </div>
+                <div>
+                  <span className="font-bold text-indigo-600 text-lg">{stats.total_chunks}</span>
+                  <span className="text-gray-600 ml-1">チャンク</span>
+                </div>
+                <div>
+                  <span className="font-bold text-indigo-600 text-lg">{stats.embedding_dimension}</span>
+                  <span className="text-gray-600 ml-1">次元</span>
+                </div>
               </div>
-              <div>
-                <span className="font-bold text-blue-600">{stats.total_chunks}</span>
-                <span className="text-gray-600 ml-1">チャンク</span>
-              </div>
-              <div>
-                <span className="font-bold text-blue-600">{stats.embedding_dimension}</span>
-                <span className="text-gray-600 ml-1">次元</span>
-              </div>
+            )}
+
+            {/* モード切り替えボタン（コンパクト） */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setIsTextMode(false)}
+                className={`py-2 px-6 rounded-lg font-medium transition-all text-base ${
+                  !isTextMode
+                    ? "bg-indigo-500 text-white shadow-md"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                📁 ファイル
+              </button>
+              <button
+                onClick={() => setIsTextMode(true)}
+                className={`py-2 px-6 rounded-lg font-medium transition-all text-base ${
+                  isTextMode
+                    ? "bg-indigo-500 text-white shadow-md"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                ✏️ テキスト
+              </button>
             </div>
-          )}
-
-          {/* モード切り替えボタン（コンパクト） */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setIsTextMode(false)}
-              className={`py-2 px-4 rounded-lg font-medium transition-all text-sm ${
-                !isTextMode
-                  ? "bg-blue-500 text-white shadow-md"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              📁 ファイル
-            </button>
-            <button
-              onClick={() => setIsTextMode(true)}
-              className={`py-2 px-4 rounded-lg font-medium transition-all text-sm ${
-                isTextMode
-                  ? "bg-blue-500 text-white shadow-md"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              ✏️ テキスト
-            </button>
           </div>
-        </div>
+        )}
 
-        {/* アップロードセクション（コンパクト） */}
-        <div className={`px-4 py-3 border-b border-gray-200 ${isTextMode ? "" : "bg-gray-50"}`}>
+        {/* アップロードセクション（コンパクト）（ドキュメント閲覧中は非表示） */}
+        {!viewingDocument && (
+          <div className={`px-4 py-3 border-b border-gray-200 ${isTextMode ? "" : "bg-gray-50"}`}>
           {!isTextMode ? (
             // ファイルアップロードモード
-            <label className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all cursor-pointer shadow-md hover:shadow-lg">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <label className="flex items-center justify-center gap-2 px-4 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-all cursor-pointer shadow-md hover:shadow-lg">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -466,8 +470,8 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                 />
               </svg>
-              <span className="font-bold">ファイルをアップロード</span>
-              <span className="text-xs opacity-80">(.txt, .md, .pdf)</span>
+              <span className="font-bold text-base">ファイルをアップロード</span>
+              <span className="text-sm opacity-80">(.txt, .md, .pdf)</span>
               <input
                 type="file"
                 accept=".txt,.md,.pdf"
@@ -481,13 +485,13 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
             <div className="flex gap-3 items-end">
               {/* テンプレート選択 */}
               <div className="flex-1">
-                <label className="block text-xs font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   📋 テンプレート
                 </label>
                 <select
                   value={selectedTemplate}
                   onChange={(e) => handleTemplateSelect(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   disabled={isLoading}
                 >
                   <option value="">-- 空白から始める --</option>
@@ -501,7 +505,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
 
               {/* ファイル名入力 */}
               <div className="flex-1">
-                <label className="block text-xs font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   📝 ファイル名
                 </label>
                 <input
@@ -509,7 +513,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                   value={editorFilename}
                   onChange={(e) => setEditorFilename(e.target.value)}
                   placeholder="例: booth_A01_info"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   disabled={isLoading}
                 />
               </div>
@@ -517,9 +521,10 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
           )}
 
           {uploadStatus && (
-            <div className="mt-3 text-center text-sm font-medium">{uploadStatus}</div>
+            <div className="mt-3 text-center text-base font-medium">{uploadStatus}</div>
           )}
-        </div>
+          </div>
+        )}
 
         {/* ドキュメント一覧 or ドキュメント内容表示 or テキストエディタ */}
         <div className="flex-1 overflow-hidden px-4 py-3 flex flex-col">
@@ -527,14 +532,14 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
             // テキストエディタ表示（大きく）
             <div className="h-full flex flex-col">
               <div className="mb-2 flex items-center justify-between">
-                <div className="text-xs text-gray-500 flex items-center gap-4">
+                <div className="text-sm text-gray-500 flex items-center gap-4">
                   <span>{editorText.length} 文字</span>
                   <span>Markdown形式で記述できます</span>
                 </div>
                 <button
                   onClick={handleTextUpload}
                   disabled={isLoading || !editorText.trim() || !editorFilename.trim()}
-                  className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all font-bold shadow-md hover:shadow-lg"
+                  className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all font-bold shadow-md hover:shadow-lg text-base"
                 >
                   {isLoading ? "追加中..." : "RAGに追加"}
                 </button>
@@ -543,7 +548,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                 value={editorText}
                 onChange={(e) => setEditorText(e.target.value)}
                 placeholder="ここにテキストを入力するか、上のテンプレートを選択してください...&#10;&#10;展示会の他ブース情報などを追加して、来場者がAIチャットで質問できるようにしましょう！"
-                className="flex-1 w-full p-4 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none font-mono text-sm leading-relaxed"
+                className="flex-1 w-full p-4 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none font-mono text-base leading-relaxed"
                 disabled={isLoading}
                 style={{ minHeight: "400px" }}
               />
@@ -555,7 +560,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
               <div className="flex-shrink-0 pb-4 border-b border-gray-200">
                 <button
                   onClick={closeDocumentView}
-                  className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
+                  className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium text-base"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -567,9 +572,9 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                   </svg>
                   <span>一覧に戻る</span>
                 </button>
-                <h3 className="text-xl font-bold text-gray-900 mt-4 flex items-center gap-2">
+                <h3 className="text-2xl font-bold text-gray-900 mt-4 flex items-center gap-2">
                   <svg
-                    className="w-6 h-6 text-blue-500"
+                    className="w-7 h-7 text-indigo-500"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -583,7 +588,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                   </svg>
                   {documentContent.filename}
                 </h3>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-base text-gray-600 mt-1">
                   総チャンク数: {documentContent.total_chunks}
                   {searchQuery &&
                     ` | マッチ: ${documentContent.chunks.filter(chunkMatchesSearch).length}件`}
@@ -591,7 +596,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
 
                 {/* 検索ボックス */}
                 <div className="mt-4">
-                  <div className="flex items-center gap-2 border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
+                  <div className="flex items-center gap-2 border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent">
                     <svg
                       className="w-4 h-4 text-gray-400 flex-shrink-0"
                       fill="none"
@@ -610,7 +615,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="キーワードで検索..."
-                      className="flex-1 outline-none text-sm"
+                      className="flex-1 outline-none text-base"
                     />
                     {searchQuery && (
                       <button
@@ -645,13 +650,13 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                     className="bg-gray-50 rounded-xl p-4 border border-gray-200"
                   >
                     <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-300">
-                      <span className="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded">
+                      <span className="bg-indigo-500 text-white text-sm font-bold px-3 py-1 rounded">
                         チャンク {chunk.chunk_index + 1}
                       </span>
-                      <span className="text-xs text-gray-500">{chunk.char_count} 文字</span>
+                      <span className="text-sm text-gray-500">{chunk.char_count} 文字</span>
                     </div>
                     <div
-                      className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed"
+                      className="text-base text-gray-800 whitespace-pre-wrap leading-relaxed"
                       dangerouslySetInnerHTML={{
                         __html: highlightText(chunk.content, searchQuery),
                       }}
@@ -673,8 +678,8 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                         d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                       />
                     </svg>
-                    <p className="text-lg font-medium">検索結果なし</p>
-                    <p className="text-sm mt-2">
+                    <p className="text-xl font-medium">検索結果なし</p>
+                    <p className="text-base mt-2">
                       「{searchQuery}」に一致するチャンクが見つかりませんでした
                     </p>
                   </div>
@@ -684,8 +689,8 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
           ) : isLoadingContent ? (
             // ローディング表示
             <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-              <p className="mt-4 text-gray-600">読み込み中...</p>
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
+              <p className="mt-4 text-gray-600 text-base">読み込み中...</p>
             </div>
           ) : documents.length === 0 ? (
             // ドキュメントがない場合
@@ -703,8 +708,8 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
-              <p className="text-lg font-medium">ドキュメントがありません</p>
-              <p className="text-sm mt-2">上のボタンからファイルをアップロードしてください</p>
+              <p className="text-xl font-medium">ドキュメントがありません</p>
+              <p className="text-base mt-2">上のボタンからファイルをアップロードしてください</p>
             </div>
           ) : (
             // ドキュメント一覧
@@ -719,7 +724,7 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
                         <svg
-                          className="w-5 h-5 text-blue-500 flex-shrink-0"
+                          className="w-6 h-6 text-indigo-500 flex-shrink-0"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -731,16 +736,16 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                           />
                         </svg>
-                        <h3 className="font-bold text-gray-900 truncate">{doc.filename}</h3>
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                        <h3 className="font-bold text-gray-900 truncate text-base">{doc.filename}</h3>
+                        <span className="text-sm bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">
                           {doc.file_type}
                         </span>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-4 text-base text-gray-600">
                         <span>📊 {doc.chunk_count} チャンク</span>
                         <span>🕒 {new Date(doc.upload_timestamp).toLocaleString("ja-JP")}</span>
                       </div>
-                      <div className="mt-2 text-xs text-blue-600 font-medium">
+                      <div className="mt-2 text-sm text-indigo-600 font-medium">
                         クリックして内容を表示 →
                       </div>
                     </div>
@@ -769,12 +774,12 @@ export function DocumentManager({ isOpen, onClose }: DocumentManagerProps) {
 
         {/* フッター */}
         <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
-          <div className="text-xs text-gray-500">
+          <div className="text-sm text-gray-500">
             ヘッダーをドラッグで移動 | 右下をドラッグでサイズ変更
           </div>
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all font-medium text-sm"
+            className="px-5 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all font-medium text-base"
           >
             閉じる
           </button>
